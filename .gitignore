@@ -1,8 +1,9 @@
 # Project specific - projects 目录内容（每个开发者需要自己管理）
-# projects/ 目录包含项目相关文件，为避免将大量内容提交到仓库，整个目录被忽略
-# 但保留 .gitkeep 文件以保持目录结构
-# 参考 CozyCognee 的配置，忽略 projects 目录下的所有内容，避免显示 mem0 的提交历史
-projects/*
+# projects/ 目录包含项目相关文件
+# 参考 CozyCognee 的配置，忽略 projects/mem0 目录，避免显示 mem0 的提交历史
+# 但允许提交 POC 项目
+projects/mem0/
+projects/mem0/**
 !projects/.gitkeep
 
 # Python
