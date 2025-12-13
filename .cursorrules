@@ -1,0 +1,595 @@
+# CozyMem0 项目规则
+
+## 📚 文档组织规则（强制要求）
+
+### 文档位置规则
+- **所有文档必须放在 `docs/` 目录下**
+- **禁止在项目根目录或其他目录创建文档文件（.md, .txt 等）**
+- **README.md 文件例外：**
+  - 项目根目录的 `README.md` 是项目主文档，允许存在
+  - 各子目录的 `README.md` 用于说明该目录用途，允许存在
+  - 但详细的技术文档、使用文档、开发文档等必须放在 `docs/` 目录下
+
+### 文档目录结构
+```
+docs/
+├── README.md                    # 文档索引和导航
+├── PROJECT_STRUCTURE.md         # 项目结构说明
+├── research/                    # 研究相关文档
+│   ├── README.md                # 研究文档索引
+│   ├── experiments/             # 实验记录
+│   ├── findings/                # 研究发现
+│   └── papers/                  # 相关论文和参考资料
+├── poc/                         # POC 项目文档
+│   ├── README.md                # POC 文档索引
+│   ├── prototypes/              # 原型说明
+│   └── evaluations/             # 评估报告
+├── development/                 # 开发相关文档
+│   ├── README.md
+│   ├── setup.md                 # 开发环境设置
+│   └── coding-standards.md     # 编码规范
+├── usage/                       # 使用相关文档
+│   ├── README.md
+│   └── examples.md              # 使用示例
+└── deployment/                  # 部署相关文档（如需要）
+    └── README.md
+```
+
+### 文档命名规范
+- 使用有意义的文件名，清晰描述文档内容
+- 使用 kebab-case（短横线分隔）命名：`experiment-results.md`
+- 主要文档使用 `README.md` 作为文件名
+- 避免使用中文文件名（内容可以使用中文）
+
+### 文档分类原则
+- **research/**: 研究计划、实验记录、研究发现、论文阅读笔记
+- **poc/**: POC 项目说明、原型设计、评估报告、可行性分析
+- **development/**: 开发环境、开发流程、代码规范、技术选型
+- **usage/**: 使用指南、API 文档、最佳实践、示例代码
+- **deployment/**: 部署、运维、配置相关文档（如需要）
+
+## 🚫 禁止的操作
+
+1. **禁止在根目录创建文档文件**（除 README.md 外）
+   - ❌ `根目录/实验记录.md`
+   - ❌ `根目录/研究笔记.md`
+   - ✅ `docs/research/experiments/experiment-001.md`
+   - ✅ `docs/research/findings/finding-001.md`
+
+2. **禁止在 projects/ 目录下创建详细文档**
+   - ❌ `projects/mem0/研究说明.md`
+   - ✅ `projects/mem0/README.md`（简要说明）
+   - ✅ `docs/research/mem0-analysis.md`（详细文档）
+
+3. **禁止在项目根目录创建结构说明文档**
+   - ❌ `根目录/PROJECT_STRUCTURE.md`
+   - ✅ `docs/PROJECT_STRUCTURE.md`
+
+## ✅ 正确的文档组织示例
+
+### 示例 1: 添加研究实验记录
+```
+docs/
+└── research/
+    ├── README.md
+    └── experiments/
+        ├── experiment-001-memory-performance.md
+        └── experiment-002-embedding-comparison.md
+```
+
+### 示例 2: 添加 POC 评估报告
+```
+docs/
+└── poc/
+    ├── README.md
+    └── evaluations/
+        ├── poc-001-feasibility-report.md
+        └── poc-002-performance-evaluation.md
+```
+
+### 示例 3: 添加技术选型文档
+```
+docs/
+└── development/
+    ├── README.md
+    └── tech-stack-selection.md
+```
+
+## 📝 文档维护规则
+
+1. **保持文档更新**: 代码变更时同步更新相关文档
+2. **文档索引**: 在 `docs/README.md` 中维护文档索引
+3. **交叉引用**: 使用相对路径进行文档间的交叉引用
+4. **版本控制**: 重要变更在文档中记录版本信息
+5. **实验记录**: 所有实验必须记录在 `docs/research/experiments/` 目录下
+
+## 🔍 检查清单
+
+创建或修改文档时，请确认：
+- [ ] 文档是否放在 `docs/` 目录下的适当子目录？
+- [ ] 是否在 `docs/README.md` 中添加了索引？
+- [ ] 文件名是否符合命名规范？
+- [ ] 是否避免了在根目录创建文档文件？
+
+## 🐍 Python 最佳实践（强制要求）
+
+### 代码风格和类型提示
+
+#### 类型提示要求（强制）
+- **所有函数必须包含完整的类型提示**
+- 使用 `typing` 和 `typing_extensions` 模块
+- 使用 `Optional[T]` 表示可选类型
+- 使用 `Union[T1, T2]` 表示联合类型
+- 使用 `List[T]`, `Dict[K, V]` 等泛型类型
+
+```python
+# ✅ 正确示例
+from typing import Optional, List, Dict, Union, Any
+from pathlib import Path
+
+def process_data(
+    data: Union[str, bytes, Path],
+    config: Optional[Dict[str, Any]] = None,
+    batch_size: int = 32
+) -> List[Dict[str, Any]]:
+    """处理数据"""
+    pass
+
+# ❌ 错误示例（缺少类型提示）
+def process_data(data, config=None, batch_size=32):
+    pass
+```
+
+#### 文档字符串要求（强制）
+- **所有公共类、方法、函数必须包含 docstring**
+- 使用 Google 风格或 NumPy 风格的 docstring
+- 必须包含参数说明、返回值说明、异常说明
+
+```python
+# ✅ 正确示例
+def analyze_memory(
+    memory_data: Dict[str, Any],
+    threshold: float = 0.5
+) -> Dict[str, float]:
+    """
+    分析记忆数据
+    
+    Args:
+        memory_data: 记忆数据字典，包含记忆内容和元数据
+        threshold: 分析阈值，默认为 0.5
+    
+    Returns:
+        分析结果字典，包含各项指标和分数
+    
+    Raises:
+        ValueError: 当 memory_data 为空或格式不正确时
+        TypeError: 当 threshold 不是数值类型时
+    
+    Example:
+        >>> data = {"content": "test", "metadata": {}}
+        >>> result = analyze_memory(data, threshold=0.6)
+        >>> print(result["score"])
+    """
+    pass
+```
+
+### 异步编程规范
+
+#### 异步函数要求
+- **所有 I/O 操作必须使用异步函数**（使用 `async def`）
+- 使用 `asyncio` 进行并发操作
+- 正确使用 `await` 关键字
+- 使用 `aiohttp` 或 `httpx.AsyncClient` 进行异步 HTTP 请求
+
+```python
+# ✅ 正确示例
+import asyncio
+import httpx
+
+async def fetch_data(url: str) -> Dict[str, Any]:
+    """异步获取数据"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return response.json()
+
+async def process_multiple(urls: List[str]) -> List[Dict[str, Any]]:
+    """并发处理多个请求"""
+    tasks = [fetch_data(url) for url in urls]
+    return await asyncio.gather(*tasks)
+
+# ❌ 错误示例（使用同步请求）
+import requests
+
+def fetch_data(url: str):
+    response = requests.get(url)  # 同步调用，阻塞
+    return response.json()
+```
+
+### 错误处理规范
+
+#### 异常层次结构
+- 定义清晰的异常层次结构
+- 所有自定义异常继承自项目基础异常类
+- 提供详细的错误信息
+
+```python
+# ✅ 正确示例
+class CozyMem0Error(Exception):
+    """项目基础异常"""
+    pass
+
+class MemoryError(CozyMem0Error):
+    """记忆相关错误"""
+    pass
+
+class EmbeddingError(CozyMem0Error):
+    """嵌入相关错误"""
+    pass
+
+class ValidationError(CozyMem0Error):
+    """验证错误"""
+    def __init__(self, message: str, field: Optional[str] = None):
+        self.message = message
+        self.field = field
+        super().__init__(f"{field}: {message}" if field else message)
+```
+
+#### 错误处理实现
+- 使用 try-except 捕获具体异常
+- 记录错误日志
+- 提供有意义的错误消息
+
+```python
+# ✅ 正确示例
+import logging
+
+logger = logging.getLogger(__name__)
+
+async def safe_process(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """安全处理数据，捕获并记录错误"""
+    try:
+        result = await process_data(data)
+        return result
+    except ValidationError as e:
+        logger.warning(f"Validation error: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        raise
+```
+
+### 代码组织规范
+
+#### 项目结构
+```
+project/
+├── src/                    # 源代码目录
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models/             # 数据模型
+│   ├── utils/              # 工具函数
+│   └── experiments/        # 实验代码
+├── tests/                  # 测试代码
+├── notebooks/              # Jupyter notebooks（如需要）
+├── docs/                   # 文档
+├── requirements.txt        # 依赖
+└── README.md
+```
+
+#### 模块组织
+- 每个模块应该有单一职责
+- 使用 `__init__.py` 导出公共 API
+- 避免循环导入
+
+```python
+# ✅ 正确示例
+# src/models/__init__.py
+from .memory import Memory, MemoryStore
+from .embedding import Embedding, EmbeddingModel
+
+__all__ = ["Memory", "MemoryStore", "Embedding", "EmbeddingModel"]
+```
+
+### 依赖管理
+
+#### 使用 requirements.txt 或 pyproject.toml
+- 明确指定依赖版本
+- 区分开发依赖和生产依赖
+- 定期更新依赖
+
+```txt
+# requirements.txt
+httpx>=0.25.0
+pydantic>=2.0.0
+numpy>=1.24.0
+
+# requirements-dev.txt
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+ruff>=0.1.0
+mypy>=1.0.0
+```
+
+### 测试规范
+
+#### 测试要求
+- **所有公共函数必须有单元测试**
+- 使用 `pytest` 和 `pytest-asyncio` 进行测试
+- 测试文件命名：`test_*.py`
+- 测试覆盖率目标：≥ 70%（研究和 POC 项目可适当降低）
+
+```python
+# ✅ 正确示例
+import pytest
+from unittest.mock import AsyncMock, patch
+from src.models import Memory
+
+@pytest.mark.asyncio
+async def test_memory_creation():
+    """测试记忆创建"""
+    memory = Memory(content="test", metadata={})
+    assert memory.content == "test"
+    assert memory.metadata == {}
+
+@pytest.mark.asyncio
+async def test_memory_validation_error():
+    """测试记忆验证错误"""
+    with pytest.raises(ValidationError):
+        Memory(content="")  # 空内容应该抛出异常
+```
+
+## 🔬 研究和 POC 项目最佳实践
+
+### 实验管理
+
+#### 实验记录规范
+- **所有实验必须记录在 `docs/research/experiments/` 目录下**
+- 每个实验文件应包含：
+  - 实验目的和假设
+  - 实验设置和参数
+  - 实验结果和数据
+  - 结论和下一步计划
+
+```markdown
+# 实验记录模板
+# docs/research/experiments/experiment-001.md
+
+## 实验信息
+- **实验编号**: EXP-001
+- **实验日期**: 2024-01-15
+- **实验者**: [姓名]
+
+## 实验目的
+[描述实验要解决的问题和假设]
+
+## 实验设置
+- **环境**: [Python 版本、依赖版本等]
+- **参数**: 
+  - param1: value1
+  - param2: value2
+
+## 实验步骤
+1. [步骤 1]
+2. [步骤 2]
+
+## 实验结果
+[数据、图表、观察结果]
+
+## 结论
+[分析结果，验证或否定假设]
+
+## 下一步计划
+[后续实验或改进方向]
+```
+
+### 代码版本控制
+
+#### 实验代码管理
+- 使用 Git 分支管理不同实验
+- 为每个重要实验创建独立分支
+- 使用有意义的提交信息
+
+```bash
+# ✅ 正确示例
+git checkout -b experiment/memory-embedding-comparison
+git commit -m "feat(experiment): add embedding comparison experiment"
+git commit -m "docs(experiment): record experiment results"
+```
+
+#### 代码快照
+- 重要实验的代码应该打标签
+- 使用语义化版本号或实验编号
+
+```bash
+# ✅ 正确示例
+git tag -a exp-001 -m "Experiment 001: Memory embedding comparison"
+```
+
+### 数据管理
+
+#### 数据存储规范
+- **不要将大型数据文件提交到 Git**
+- 使用 `.gitignore` 忽略数据文件
+- 在 `docs/research/` 中记录数据来源和位置
+- 使用外部存储（如云存储）保存实验数据
+
+```gitignore
+# .gitignore
+# 数据文件
+*.csv
+*.json
+*.pkl
+*.h5
+*.parquet
+data/
+datasets/
+results/
+*.log
+```
+
+#### 数据文档
+- 在 `docs/research/` 中记录：
+  - 数据来源
+  - 数据格式
+  - 数据位置（如果不在仓库中）
+  - 数据预处理步骤
+
+### 可重现性
+
+#### 环境管理
+- 使用 `requirements.txt` 或 `pyproject.toml` 锁定依赖版本
+- 使用虚拟环境（venv, conda, poetry）
+- 记录 Python 版本和系统环境
+
+```python
+# ✅ 正确示例
+# requirements.txt 中指定精确版本
+numpy==1.24.3
+pandas==2.0.3
+```
+
+#### 随机种子
+- **所有涉及随机性的代码必须设置随机种子**
+- 在实验配置中记录使用的随机种子
+
+```python
+# ✅ 正确示例
+import random
+import numpy as np
+import torch
+
+# 设置随机种子以确保可重现性
+RANDOM_SEED = 42
+
+random.seed(RANDOM_SEED)
+np.random.seed(RANDOM_SEED)
+torch.manual_seed(RANDOM_SEED)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(RANDOM_SEED)
+```
+
+### 性能分析
+
+#### 性能测量
+- 使用 `timeit` 或 `cProfile` 测量性能
+- 记录关键操作的执行时间
+- 在实验记录中包含性能数据
+
+```python
+# ✅ 正确示例
+import time
+from functools import wraps
+
+def measure_time(func):
+    """装饰器：测量函数执行时间"""
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        start = time.time()
+        result = await func(*args, **kwargs)
+        elapsed = time.time() - start
+        print(f"{func.__name__} took {elapsed:.2f} seconds")
+        return result
+    return wrapper
+
+@measure_time
+async def process_large_dataset(data):
+    # 处理数据
+    pass
+```
+
+### 原型开发
+
+#### POC 代码组织
+- POC 代码应该放在独立的目录或分支中
+- 使用清晰的命名标识 POC 代码
+- 在 `docs/poc/` 中记录 POC 的设计和评估
+
+```
+project/
+├── poc/
+│   ├── prototype-001/      # POC 1
+│   ├── prototype-002/      # POC 2
+│   └── README.md
+└── docs/
+    └── poc/
+        ├── prototype-001-design.md
+        └── prototype-001-evaluation.md
+```
+
+#### 快速迭代
+- POC 代码可以适当放宽代码规范
+- 但必须包含基本的文档和注释
+- 重要发现应该及时记录在文档中
+
+### 知识管理
+
+#### 研究笔记
+- 在 `docs/research/findings/` 中记录重要发现
+- 在 `docs/research/papers/` 中保存论文阅读笔记
+- 使用标签和分类组织知识
+
+```markdown
+# 研究发现模板
+# docs/research/findings/finding-001.md
+
+## 发现信息
+- **日期**: 2024-01-15
+- **相关实验**: EXP-001, EXP-002
+- **标签**: #memory #embedding #performance
+
+## 发现内容
+[详细描述发现的内容]
+
+## 证据
+[支持发现的实验数据或观察]
+
+## 影响
+[这个发现对项目的影响]
+
+## 相关资源
+- [链接到相关论文]
+- [链接到相关实验]
+```
+
+## 🎯 项目特定规则
+
+### CozyMem0 项目文档分类
+- **research/**: Mem0 相关研究、实验记录、性能分析
+- **poc/**: Mem0 集成 POC、原型评估
+- **development/**: 开发环境、代码规范、技术选型
+- **usage/**: Mem0 使用指南、API 文档、集成示例
+
+### 文档链接规范
+- 项目根目录 `README.md` 链接到 `docs/` 目录下的详细文档
+- `docs/README.md` 作为文档导航中心
+- 使用相对路径进行文档间链接
+
+## ⚠️ 重要提醒
+
+**所有文档必须放在 `docs/` 目录下并按子目录整理！**
+
+**所有实验必须记录在 `docs/research/experiments/` 目录下！**
+
+**所有代码必须遵循 Python 最佳实践！**
+
+违反此规则的文件将被视为不符合项目规范，需要在代码审查时修正。
+
+## 🔍 检查清单
+
+开发功能或进行实验时，请确认：
+- [ ] 是否遵循了文档组织规则？
+- [ ] 代码是否包含完整的类型提示？
+- [ ] 函数是否包含 docstring？
+- [ ] 是否设置了随机种子以确保可重现性？
+- [ ] 实验是否记录在 `docs/research/experiments/` 中？
+- [ ] 重要发现是否记录在 `docs/research/findings/` 中？
+- [ ] 代码是否通过了基本的测试？
+
+## 📚 参考资源
+
+- [Python Type Hints](https://docs.python.org/3/library/typing.html)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+- [PEP 8 -- Style Guide for Python Code](https://pep8.org/)
+- [Research Software Engineering Best Practices](https://www.software.ac.uk/resources/guides/good-enough-practices-scientific-computing)
+

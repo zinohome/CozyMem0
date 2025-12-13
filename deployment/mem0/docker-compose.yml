@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  mem0-api:
+    build:
+      context: ../../projects/mem0/server
+      dockerfile: Dockerfile
+    container_name: mem0-api
+    restart: unless-stopped
+    ports:
+      - "8888:8000"
+    env_file:
+      - .env
+    environment:
+      # LLM 配置
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # 数据库配置
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=mem0
+      - POSTGRES_USER=mem0
+      - POSTGRES_PASSWORD=mem0password
+      - POSTGRES_COLLECTION_NAME=memories
+      # Neo4j 配置
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=mem0graph
+      # 历史数据库路径
+      - HISTORY_DB_PATH=/app/history/history.db
+    volumes:
+      - mem0_history:/app/history
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - mem0-network
+
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: mem0-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=mem0
+      - POSTGRES_PASSWORD=mem0password
+      - POSTGRES_DB=mem0
+    ports:
+      - "8432:5432"
+    volumes:
+      - mem0_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "mem0", "-U", "mem0"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mem0-network
+
+  neo4j:
+    image: neo4j:5.26.4
+    container_name: mem0-neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/mem0graph
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+    ports:
+      - "8474:7474"  # HTTP
+      - "8687:7687"  # Bolt
+    volumes:
+      - mem0_neo4j_data:/data
+    healthcheck:
+      test: wget http://localhost:7687 || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    networks:
+      - mem0-network
+
+volumes:
+  mem0_history:
+  mem0_postgres_data:
+  mem0_neo4j_data:
+
+networks:
+  mem0-network:
+    driver: bridge
+
