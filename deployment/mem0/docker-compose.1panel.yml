@@ -1,6 +1,6 @@
-# Docker Compose 编排文件
-# 适用于本地开发和测试环境
-# 注意：使用内部网络 mem0-network，数据存储在 Docker volumes
+# 1Panel Docker Compose 编排文件
+# 适用于1Panel面板的Docker Compose配置
+# 注意：使用外部网络 1panel-network，所有数据存储在 /data/mem0 目录
 
 version: '3.8'
 
@@ -12,8 +12,9 @@ services:
     restart: unless-stopped
     ports:
       - "8888:8000"
-    env_file:
-      - .env
+    # 内存限制（如果 1Panel 支持）
+    mem_limit: 2g
+    mem_reservation: 512m
     environment:
       # ==================== LLM 配置 ====================
       # 必需：配置您的LLM API密钥
@@ -35,13 +36,16 @@ services:
       - HISTORY_DB_PATH=/app/history/history.db
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       neo4j:
-        condition: service_healthy
+        condition: service_started
     volumes:
-      - mem0_history:/app/history
+      - /data/mem0/history:/app/history
+      - /data/mem0/logs:/app/logs
     networks:
-      - mem0-network
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
 
   # PostgreSQL 关系数据库（使用带 pgvector 扩展的镜像）
   # 注意：向量数据也存储在此数据库中
@@ -49,22 +53,24 @@ services:
     image: pgvector/pgvector:0.8.1-pg17-trixie
     container_name: mem0_postgres
     restart: unless-stopped
+    ports:
+      - "8432:5432"
     environment:
       - POSTGRES_USER=mem0
       - POSTGRES_PASSWORD=mem0password
       - POSTGRES_DB=mem0
       - PGDATA=/var/lib/postgresql/data/pgdata
-    ports:
-      - "8432:5432"
     volumes:
-      - mem0_postgres_data:/var/lib/postgresql/data
+      - /data/mem0/postgres:/var/lib/postgresql/data
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "mem0", "-U", "mem0"]
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - mem0-network
 
   # Neo4j 图数据库
   neo4j:
@@ -80,12 +86,14 @@ services:
       - NEO4J_dbms_memory_heap_initial__size=512m
       - NEO4J_dbms_memory_heap_max__size=2G
     volumes:
-      - mem0_neo4j_data:/data
-      - mem0_neo4j_logs:/logs
-      - mem0_neo4j_import:/var/lib/neo4j/import
-      - mem0_neo4j_plugins:/plugins
+      - /data/mem0/neo4j/data:/data
+      - /data/mem0/neo4j/logs:/logs
+      - /data/mem0/neo4j/import:/var/lib/neo4j/import
+      - /data/mem0/neo4j/plugins:/plugins
     networks:
-      - mem0-network
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
     healthcheck:
       test: wget http://localhost:7687 || exit 1
       interval: 1s
@@ -93,15 +101,7 @@ services:
       retries: 20
       start_period: 90s
 
-volumes:
-  mem0_history:
-  mem0_postgres_data:
-  mem0_neo4j_data:
-  mem0_neo4j_logs:
-  mem0_neo4j_import:
-  mem0_neo4j_plugins:
-
 networks:
-  mem0-network:
-    driver: bridge
+  1panel-network:
+    external: true
 
