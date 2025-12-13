@@ -18,17 +18,22 @@
 
 ### 1. 构建 Docker 镜像
 
-首先需要构建 Mem0 API 镜像：
+首先需要构建 Mem0 API 和 WebUI 镜像：
 
 ```bash
-# 使用构建脚本（推荐）
+# 构建 Mem0 API 镜像
 ./build.sh
+
+# 构建 Mem0 WebUI 镜像（基于 OpenMemory UI，适配 Mem0 API）
+./build-webui.sh
 
 # 或指定标签
 ./build.sh v1.0.0
+./build-webui.sh v1.0.0
 
 # 或手动构建
 docker build -t mem0-api:latest -f Dockerfile ../..
+docker build -t mem0-webui:latest -f webui.Dockerfile ../..
 ```
 
 ### 2. 准备环境变量
@@ -66,6 +71,9 @@ docker-compose up -d
 - Swagger UI: http://localhost:8888/docs
 - ReDoc: http://localhost:8888/redoc
 
+访问 WebUI：
+- WebUI: http://localhost:3000
+
 健康检查：
 ```bash
 curl http://localhost:8888/health
@@ -75,6 +83,11 @@ curl http://localhost:8888/health
 
 ```
 ┌─────────────────┐
+│   Mem0 WebUI   │  :3000
+│  (Next.js UI)  │
+└────────┬────────┘
+         │
+┌────────▼────────┐
 │   Mem0 API      │  :8888
 │   (FastAPI)     │
 └────────┬────────┘
@@ -86,6 +99,36 @@ curl http://localhost:8888/health
 │(pgvector)│ │(Graph)│
 └────────┘ └───────┘
 ```
+
+## WebUI 说明
+
+### 基于 OpenMemory UI 的剪裁版本
+
+Mem0 WebUI 是基于 OpenMemory UI 剪裁适配的版本，主要特点：
+
+1. **适配 Mem0 API**：修改了所有 hooks 以适配 Mem0 REST API 接口
+2. **功能简化**：
+   - ✅ 支持记忆的创建、查看、更新、删除
+   - ✅ 支持记忆搜索
+   - ✅ 前端实现分页和过滤
+   - ⚠️ 应用管理功能简化（返回默认应用）
+   - ⚠️ 分类管理功能不可用（返回空列表）
+   - ⚠️ 访问日志功能不可用（Mem0 API 不支持）
+   - ⚠️ 相关记忆功能使用搜索代替
+
+3. **适配文件位置**：
+   - 适配的 hooks 文件位于 `deployment/mem0/webui-adapters/`
+   - 构建时自动替换原始 hooks
+
+### WebUI 功能限制
+
+由于 Mem0 API 比 OpenMemory API 更简单，以下功能在 WebUI 中受限：
+
+- **应用管理**：Mem0 API 不支持应用管理，WebUI 显示默认的 "Mem0" 应用
+- **分类管理**：Mem0 API 不支持分类，WebUI 中分类功能不可用
+- **访问日志**：Mem0 API 不支持访问日志记录
+- **状态管理**：Mem0 API 不支持暂停/归档状态，只有删除功能
+- **配置管理**：Mem0 API 的配置接口格式不同，部分配置功能可能受限
 
 ## 配置说明
 
@@ -214,7 +257,9 @@ docker-compose logs neo4j
 1. **连接失败**：检查端口是否被占用
 2. **数据库连接错误**：检查环境变量配置
 3. **LLM API 错误**：检查 `OPENAI_API_KEY` 是否正确
-4. **镜像不存在**：确保已运行 `./build.sh` 构建镜像
+4. **镜像不存在**：确保已运行 `./build.sh` 和 `./build-webui.sh` 构建镜像
+5. **WebUI 无法访问 API**：检查 `NEXT_PUBLIC_API_URL` 环境变量，确保指向正确的 API 地址
+6. **WebUI 构建失败**：检查 `projects/mem0/openmemory/ui/` 目录是否存在，确保 OpenMemory UI 源代码可用
 
 ## 参考
 

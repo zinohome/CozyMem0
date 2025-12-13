@@ -35,11 +35,27 @@ services:
       - HISTORY_DB_PATH=/app/history/history.db
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       neo4j:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - mem0_history:/app/history
+    networks:
+      - mem0-network
+
+  # Mem0 WebUI 服务（基于 OpenMemory UI，适配 Mem0 API）
+  mem0-webui:
+    image: mem0-webui:latest
+    container_name: mem0-webui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # WebUI 通过容器名访问 API
+      - NEXT_PUBLIC_API_URL=http://mem0-api:8000
+    depends_on:
+      mem0-api:
+        condition: service_started
     networks:
       - mem0-network
 
@@ -58,11 +74,6 @@ services:
       - "8432:5432"
     volumes:
       - mem0_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "mem0", "-U", "mem0"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     networks:
       - mem0-network
 
@@ -86,12 +97,6 @@ services:
       - mem0_neo4j_plugins:/plugins
     networks:
       - mem0-network
-    healthcheck:
-      test: wget http://localhost:7687 || exit 1
-      interval: 1s
-      timeout: 10s
-      retries: 20
-      start_period: 90s
 
 volumes:
   mem0_history:

@@ -35,13 +35,28 @@ services:
       # ==================== 历史数据库配置 ====================
       - HISTORY_DB_PATH=/app/history/history.db
     depends_on:
-      postgres:
-        condition: service_started
-      neo4j:
-        condition: service_started
+      - postgres
+      - neo4j
     volumes:
       - /data/mem0/history:/app/history
       - /data/mem0/logs:/app/logs
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+
+  # Mem0 WebUI 服务（基于 OpenMemory UI，适配 Mem0 API）
+  mem0-webui:
+    image: mem0-webui:latest
+    container_name: mem0-webui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # WebUI 通过容器名访问 API
+      - NEXT_PUBLIC_API_URL=http://mem0-api:8000
+    depends_on:
+      - mem0-api
     networks:
       - 1panel-network
     labels:
@@ -66,11 +81,6 @@ services:
       - 1panel-network
     labels:
       createdBy: "Apps"
-    healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "mem0", "-U", "mem0"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   # Neo4j 图数据库
   neo4j:
@@ -94,12 +104,6 @@ services:
       - 1panel-network
     labels:
       createdBy: "Apps"
-    healthcheck:
-      test: wget http://localhost:7687 || exit 1
-      interval: 1s
-      timeout: 10s
-      retries: 20
-      start_period: 90s
 
 networks:
   1panel-network:
