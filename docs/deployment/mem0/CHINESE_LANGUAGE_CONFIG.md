@@ -19,8 +19,8 @@ environment:
   # 使用支持中文的模型
   OPENAI_MODEL: gpt-4  # 或 gpt-4-turbo、gpt-3.5-turbo
   
-  # 配置系统提示词，要求保持原始语言
-  LLM_SYSTEM_PROMPT: "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
+  # 配置自定义事实提取提示词，要求保持原始语言
+  CUSTOM_FACT_EXTRACTION_PROMPT: "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
 ```
 
 ### 方案 2：使用 .env 文件
@@ -29,7 +29,7 @@ environment:
 
 ```env
 OPENAI_MODEL=gpt-4
-LLM_SYSTEM_PROMPT=请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。
+CUSTOM_FACT_EXTRACTION_PROMPT=请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。
 ```
 
 ### 方案 3：在 1Panel 中配置
@@ -37,7 +37,7 @@ LLM_SYSTEM_PROMPT=请保持记忆内容的原始语言，不要将中文翻译�
 在 1Panel 的应用配置中，添加环境变量：
 
 - `OPENAI_MODEL`: `gpt-4`
-- `LLM_SYSTEM_PROMPT`: `请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。`
+- `CUSTOM_FACT_EXTRACTION_PROMPT`: `请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。`
 
 ## 环境变量说明
 
@@ -51,9 +51,9 @@ LLM_SYSTEM_PROMPT=请保持记忆内容的原始语言，不要将中文翻译�
 - `gpt-3.5-turbo` - 支持中文，成本更低
 - `gpt-4.1-nano-2025-04-14` - 默认值，可能不支持中文
 
-### LLM_SYSTEM_PROMPT
+### CUSTOM_FACT_EXTRACTION_PROMPT
 
-配置 LLM 的系统提示词，用于控制记忆处理行为。
+配置自定义事实提取提示词，用于控制记忆处理行为。这是 Mem0 的标准配置项。
 
 **中文保持提示词：**
 ```
@@ -79,7 +79,7 @@ LLM_SYSTEM_PROMPT=请保持记忆内容的原始语言，不要将中文翻译�
 ```yaml
 environment:
   OPENAI_MODEL: gpt-4
-  LLM_SYSTEM_PROMPT: "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
+  CUSTOM_FACT_EXTRACTION_PROMPT: "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
 ```
 
 ### 2. 重新构建镜像（如果修改了代码）
@@ -125,18 +125,18 @@ curl "http://192.168.66.11:8888/memories?user_id=test_user" | jq .
 
 1. 添加环境变量读取：
    - `OPENAI_MODEL` - 模型名称
-   - `LLM_SYSTEM_PROMPT` - 系统提示词
+   - `CUSTOM_FACT_EXTRACTION_PROMPT` - 自定义事实提取提示词
 
 2. 修改 DEFAULT_CONFIG：
    - 使用环境变量中的模型名称
-   - 如果设置了系统提示词，添加到 LLM 配置中
+   - 如果设置了自定义提示词，添加到配置中（使用 Mem0 标准的 `custom_fact_extraction_prompt` 配置项）
 
 ### 代码变更
 
 ```python
 # 读取环境变量
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
-LLM_SYSTEM_PROMPT = os.environ.get("LLM_SYSTEM_PROMPT", "")
+CUSTOM_FACT_EXTRACTION_PROMPT = os.environ.get("CUSTOM_FACT_EXTRACTION_PROMPT", "")
 
 # 配置 LLM
 "llm": {
@@ -144,10 +144,12 @@ LLM_SYSTEM_PROMPT = os.environ.get("LLM_SYSTEM_PROMPT", "")
     "config": {
         "api_key": OPENAI_API_KEY,
         "temperature": 0.2,
-        "model": OPENAI_MODEL,
-        **({"system_prompt": LLM_SYSTEM_PROMPT} if LLM_SYSTEM_PROMPT else {})
+        "model": OPENAI_MODEL
     }
 }
+
+# 配置自定义提示词（如果设置了）
+**({"custom_fact_extraction_prompt": CUSTOM_FACT_EXTRACTION_PROMPT} if CUSTOM_FACT_EXTRACTION_PROMPT else {})
 ```
 
 ## 注意事项
@@ -172,15 +174,16 @@ LLM_SYSTEM_PROMPT = os.environ.get("LLM_SYSTEM_PROMPT", "")
 2. 查看服务日志确认配置是否加载
 3. 重启服务
 
-### 问题 2：系统提示词不生效
+### 问题 2：自定义提示词不生效
 
 **可能原因：**
-- Mem0 可能不支持 `system_prompt` 配置项
-- 需要检查 Mem0 源码确认支持的配置项
+- 提示词格式不正确
+- 模型不支持中文
 
 **解决方法：**
-1. 查看 Mem0 文档确认支持的配置项
-2. 如果不支持，考虑使用支持中文的模型（如 `gpt-4`）
+1. 检查提示词是否正确设置
+2. 确保使用的模型支持中文（如 `gpt-4`）
+3. 查看服务日志确认配置是否加载
 
 ## 参考
 
