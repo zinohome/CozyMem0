@@ -47,7 +47,7 @@ RUN cd /app && \
 RUN cp next.config.dev.mjs next.config.mjs
 
 # Set environment variables for Mem0 API
-ENV NEXT_PUBLIC_API_URL=http://mem0-api:8000
+ENV NEXT_PUBLIC_API_URL=http://192.168.66.11:8888
 
 # Build the application
 RUN pnpm build
