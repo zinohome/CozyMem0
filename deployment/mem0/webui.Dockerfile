@@ -36,6 +36,12 @@ COPY deployment/mem0/webui-adapters/useFiltersApi.mem0.ts ./hooks/useFiltersApi.
 COPY deployment/mem0/webui-adapters/useStats.mem0.ts ./hooks/useStats.ts
 COPY deployment/mem0/webui-adapters/useConfig.mem0.ts ./hooks/useConfig.ts
 
+# Copy Mem0 UI adapters (user selector feature)
+COPY deployment/mem0/webui-adapters/UserSelector.tsx ./components/UserSelector.tsx
+COPY deployment/mem0/webui-adapters/profileSlice.mem0.ts ./store/profileSlice.ts
+COPY deployment/mem0/webui-adapters/Navbar.mem0.tsx ./components/Navbar.tsx
+COPY deployment/mem0/webui-adapters/settings-page.mem0.tsx ./app/settings/page.tsx
+
 # Apply UI patches to remove unwanted features
 COPY deployment/mem0/webui-patches/remove-apps-navbar.patch /tmp/remove-apps-navbar.patch
 COPY deployment/mem0/webui-patches/remove-install-component.patch /tmp/remove-install-component.patch
