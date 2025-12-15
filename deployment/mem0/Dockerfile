@@ -2,10 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# 安装系统依赖
+# 安装系统依赖（psycopg 需要编译，需要 libpq-dev 和 python3-dev）
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    libpq-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
