@@ -105,6 +105,9 @@ services:
     labels:
       createdBy: "Apps"
     healthcheck:
+      # pg_isready 不需要密码，只检查服务器是否监听
+      # 如果需要更严格的检查（验证密码认证），可以使用：
+      # test: ["CMD-SHELL", "psql -U mem0 -d mem0 -c 'SELECT 1;'"]
       test: ["CMD-SHELL", "pg_isready -U mem0 -d mem0"]
       interval: 10s
       timeout: 5s
