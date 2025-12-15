@@ -1,6 +1,6 @@
---- a/main.py
-+++ b/main.py
-@@ -3,6 +3,7 @@
+--- main.py	2025-12-15 17:16:35
++++ main.py.patched	2025-12-15 17:33:53
+@@ -4,6 +4,7 @@
  
  from dotenv import load_dotenv
  from fastapi import FastAPI, HTTPException
@@ -8,13 +8,10 @@
  from fastapi.responses import JSONResponse, RedirectResponse
  from pydantic import BaseModel, Field
  
-@@ -58,6 +59,18 @@
- app = FastAPI(
+@@ -62,9 +63,24 @@
      title="Mem0 REST APIs",
      description="A REST API for managing and searching memories for your AI Agents and Apps.",
      version="1.0.0",
- )
- 
 +# 配置 CORS
 +# 允许的源（可以通过环境变量配置）
 +ALLOWED_ORIGINS = os.environ.get(
@@ -28,8 +25,11 @@
 +    allow_credentials=True,
 +    allow_methods=["*"],
 +    allow_headers=["*"],
-+)
-+
+ )
  
++)
+ 
++
  class Message(BaseModel):
-
+     role: str = Field(..., description="Role of the message (user or assistant).")
+     content: str = Field(..., description="Message content.")
