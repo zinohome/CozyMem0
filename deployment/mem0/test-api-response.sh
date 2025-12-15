@@ -5,7 +5,7 @@
 
 set -e
 
-API_URL="${MEM0_API_URL:-http://localhost:8888}"
+API_URL="${MEM0_API_URL:-http://192.168.66.11:8888}"
 USER_ID="test_user_$(date +%s)"
 
 echo "=== Mem0 API 响应格式测试 ==="

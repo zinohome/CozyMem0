@@ -29,6 +29,7 @@ interface Mem0SearchResponse {
 
 interface Mem0GetAllResponse {
   results: Mem0Memory[];
+  relations?: Array<any>; // 图数据库关系（可选）
 }
 
 interface SimpleMemory {
@@ -178,15 +179,19 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
           }
         );
         
-        allMemories = response.data.results.map((item) => ({
-          id: item.id,
-          memory: item.memory,
+        // 处理响应格式：{results: [...], relations: [...]}
+        // relations 是图数据库关系，当前不需要处理
+        const results = response.data.results || [];
+        
+        allMemories = results.map((item) => ({
+          id: item.id || String(item),
+          memory: item.memory || '',
           created_at: item.created_at || Date.now(),
           state: "active" as const,
           metadata: item.metadata || {},
           categories: [] as Category[],
           client: 'api',
-          app_name: item.metadata?.source_app || 'mem0'
+          app_name: item.metadata?.source_app || item.metadata?.app_name || 'mem0'
         }));
       }
 
