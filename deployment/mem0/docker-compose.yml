@@ -40,6 +40,10 @@ services:
       - NEO4J_PASSWORD=mem0graph
       # ==================== 历史数据库配置 ====================
       - HISTORY_DB_PATH=/app/history/history.db
+      # ==================== CORS 配置 ====================
+      # 允许的跨域源（用逗号分隔多个源）
+      # 默认包含常见的本地和服务器地址
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000,http://192.168.66.11:3000,http://192.168.66.11:4000}
     depends_on:
       postgres:
         condition: service_started
