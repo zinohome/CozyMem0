@@ -6,8 +6,8 @@
 # Base stage for common setup
 FROM node:18-alpine AS base
 
-# Install dependencies for pnpm
-RUN apk add --no-cache libc6-compat curl && \
+# Install dependencies for pnpm and patch tool
+RUN apk add --no-cache libc6-compat curl patch && \
     corepack enable && \
     corepack prepare pnpm@latest --activate
 
@@ -35,6 +35,13 @@ COPY deployment/mem0/webui-adapters/useAppsApi.mem0.ts ./hooks/useAppsApi.ts
 COPY deployment/mem0/webui-adapters/useFiltersApi.mem0.ts ./hooks/useFiltersApi.ts
 COPY deployment/mem0/webui-adapters/useStats.mem0.ts ./hooks/useStats.ts
 COPY deployment/mem0/webui-adapters/useConfig.mem0.ts ./hooks/useConfig.ts
+
+# Apply UI patches to remove unwanted features
+COPY deployment/mem0/webui-patches/remove-apps-navbar.patch /tmp/remove-apps-navbar.patch
+COPY deployment/mem0/webui-patches/remove-install-component.patch /tmp/remove-install-component.patch
+RUN cd /app && \
+    patch -p0 < /tmp/remove-apps-navbar.patch || (echo "Warning: Apps navbar patch failed" && true) && \
+    patch -p0 < /tmp/remove-install-component.patch || (echo "Warning: Install component patch failed" && true)
 
 # Use dev config for standalone build
 RUN cp next.config.dev.mjs next.config.mjs
