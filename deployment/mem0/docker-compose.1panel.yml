@@ -26,6 +26,13 @@ services:
       #   - OpenRouter: https://openrouter.ai/api/v1
       #   - 其他兼容服务: https://api.example.com/v1
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      # 可选：配置OpenAI模型（默认：gpt-4.1-nano-2025-04-14）
+      # 建议使用支持中文的模型，如：gpt-4、gpt-4-turbo、gpt-3.5-turbo
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-nano-2025-04-14}
+      # 可选：配置LLM系统提示词（用于控制记忆处理行为）
+      # 如果希望保持中文记忆不被翻译，可以设置：
+      # "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
+      LLM_SYSTEM_PROMPT: ${LLM_SYSTEM_PROMPT:-}
       # ==================== 数据库配置 ====================
       # PostgreSQL 配置（使用 pgvector 扩展）
       POSTGRES_HOST: postgres

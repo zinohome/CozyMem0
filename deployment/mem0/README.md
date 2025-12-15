@@ -1,268 +1,80 @@
-# Mem0 部署指南
+# Mem0 部署目录
 
-## 概述
-
-本目录包含 Mem0 REST API 服务器的部署配置。Mem0 提供了官方的 `MemoryClient` 和 `AsyncMemoryClient` SDK，可以通过 REST API 与部署的服务进行交互。
-
-## 部署方式
-
-### 方式 1：1Panel 部署（推荐）
-
-使用 `docker-compose.1panel.yml` 文件，适用于 1Panel 面板部署。
-
-### 方式 2：本地开发部署
-
-使用 `docker-compose.yml` 文件，适用于本地开发和测试。
+本目录包含 Mem0 API 和 WebUI 的部署相关文件。
 
 ## 快速开始
 
-### 1. 构建 Docker 镜像
-
-首先需要构建 Mem0 API 和 WebUI 镜像：
+### 构建镜像
 
 ```bash
-# 构建 Mem0 API 镜像
+# 构建 API 镜像
 ./build.sh
 
-# 构建 Mem0 WebUI 镜像（基于 OpenMemory UI，适配 Mem0 API）
+# 构建 WebUI 镜像
 ./build-webui.sh
-
-# 或指定标签
-./build.sh v1.0.0
-./build-webui.sh v1.0.0
-
-# 或手动构建
-docker build -t mem0-api:latest -f Dockerfile ../..
-docker build -t mem0-webui:latest -f webui.Dockerfile ../..
 ```
 
-### 2. 准备环境变量
-
-复制 `.env.example` 到 `.env` 并配置：
-
-```bash
-cp .env.example .env
-```
-
-编辑 `.env` 文件，设置必要的配置：
-
-```env
-# LLM 配置（必需）
-OPENAI_API_KEY=your-openai-api-key-here
-```
-
-### 3. 启动服务
-
-#### 1Panel 部署
-
-```bash
-docker-compose -f docker-compose.1panel.yml up -d
-```
-
-#### 本地开发部署
-
-```bash
-docker-compose up -d
-```
-
-### 4. 验证部署
-
-访问 API 文档：
-- Swagger UI: http://localhost:8888/docs
-- ReDoc: http://localhost:8888/redoc
-
-访问 WebUI：
-- WebUI: http://localhost:3000
-
-健康检查：
-```bash
-curl http://localhost:8888/health
-```
-
-## 服务架构
-
-```
-┌─────────────────┐
-│   Mem0 WebUI   │  :3000
-│  (Next.js UI)  │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Mem0 API      │  :8888
-│   (FastAPI)     │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌──▼────┐
-│Postgres│ │ Neo4j │
-│(pgvector)│ │(Graph)│
-└────────┘ └───────┘
-```
-
-## WebUI 说明
-
-### 基于 OpenMemory UI 的剪裁版本
-
-Mem0 WebUI 是基于 OpenMemory UI 剪裁适配的版本，主要特点：
-
-1. **适配 Mem0 API**：修改了所有 hooks 以适配 Mem0 REST API 接口
-2. **功能简化**：
-   - ✅ 支持记忆的创建、查看、更新、删除
-   - ✅ 支持记忆搜索
-   - ✅ 前端实现分页和过滤
-   - ⚠️ 应用管理功能简化（返回默认应用）
-   - ⚠️ 分类管理功能不可用（返回空列表）
-   - ⚠️ 访问日志功能不可用（Mem0 API 不支持）
-   - ⚠️ 相关记忆功能使用搜索代替
-
-3. **适配文件位置**：
-   - 适配的 hooks 文件位于 `deployment/mem0/webui-adapters/`
-   - 构建时自动替换原始 hooks
-
-### WebUI 功能限制
-
-由于 Mem0 API 比 OpenMemory API 更简单，以下功能在 WebUI 中受限：
-
-- **应用管理**：Mem0 API 不支持应用管理，WebUI 显示默认的 "Mem0" 应用
-- **分类管理**：Mem0 API 不支持分类，WebUI 中分类功能不可用
-- **访问日志**：Mem0 API 不支持访问日志记录
-- **状态管理**：Mem0 API 不支持暂停/归档状态，只有删除功能
-- **配置管理**：Mem0 API 的配置接口格式不同，部分配置功能可能受限
-
-## 配置说明
-
-### 环境变量
-
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `OPENAI_API_KEY` | OpenAI API 密钥（必需） | - |
-| `POSTGRES_HOST` | PostgreSQL 主机 | `postgres` |
-| `POSTGRES_PORT` | PostgreSQL 端口 | `5432` |
-| `POSTGRES_DB` | 数据库名 | `mem0` |
-| `POSTGRES_USER` | 数据库用户 | `mem0` |
-| `POSTGRES_PASSWORD` | 数据库密码 | `mem0password` |
-| `NEO4J_URI` | Neo4j 连接 URI | `bolt://neo4j:7687` |
-| `NEO4J_USERNAME` | Neo4j 用户名 | `neo4j` |
-| `NEO4J_PASSWORD` | Neo4j 密码 | `mem0graph` |
-| `HISTORY_DB_PATH` | 历史数据库路径 | `/app/history/history.db` |
-
-### 端口映射
-
-| 服务 | 容器端口 | 主机端口 | 说明 |
-|------|---------|---------|------|
-| Mem0 API | 8000 | 8888 | REST API 服务 |
-| PostgreSQL | 5432 | 8432 | 数据库服务 |
-| Neo4j HTTP | 7474 | 8474 | Neo4j 浏览器 |
-| Neo4j Bolt | 7687 | 8687 | Neo4j 连接 |
-
-### 版本信息
-
-- **PostgreSQL + pgvector**: `pgvector/pgvector:0.8.1-pg17-trixie`（与 CozyCognee 和 CozyMemobase 统一）
-- **Neo4j**: `neo4j:latest`（与 CozyCognee 统一）
-
-## 1Panel 部署说明
-
-### 数据存储位置
-
-1Panel 部署时，所有数据存储在 `/data/mem0/` 目录：
-
-- `/data/mem0/postgres` - PostgreSQL 数据
-- `/data/mem0/neo4j/data` - Neo4j 数据
-- `/data/mem0/neo4j/logs` - Neo4j 日志
-- `/data/mem0/neo4j/import` - Neo4j 导入目录
-- `/data/mem0/neo4j/plugins` - Neo4j 插件目录
-- `/data/mem0/history` - 历史数据库
-- `/data/mem0/logs` - Mem0 API 日志
-
-### 网络配置
-
-使用外部网络 `1panel-network`，与其他服务（Cognee、Memobase）在同一网络中，可以互相访问。
-
-### 部署步骤
-
-1. **构建镜像**：
-```bash
-cd deployment/mem0
-./build.sh
-```
-
-2. **配置环境变量**：
-```bash
-# 在 1Panel 中配置环境变量，或创建 .env 文件
-OPENAI_API_KEY=your-openai-api-key-here
-```
-
-3. **启动服务**：
-```bash
-docker-compose -f docker-compose.1panel.yml up -d
-```
-
-## API 端点
-
-主要 API 端点：
-
-- `POST /memories` - 创建记忆
-- `GET /memories/{memory_id}` - 获取记忆
-- `POST /memories/search` - 搜索记忆
-- `PUT /memories/{memory_id}` - 更新记忆
-- `DELETE /memories/{memory_id}` - 删除记忆
-- `POST /configure` - 配置 Mem0
-
-详细 API 文档请访问：http://localhost:8888/docs
-
-## 数据持久化
-
-### 1Panel 部署
-
-数据存储在 `/data/mem0/` 目录（主机路径）
-
-### 本地开发部署
-
-数据存储在 Docker volumes：
-
-- `mem0_postgres_data` - PostgreSQL 数据
-- `mem0_neo4j_data` - Neo4j 数据
-- `mem0_neo4j_logs` - Neo4j 日志
-- `mem0_neo4j_import` - Neo4j 导入目录
-- `mem0_neo4j_plugins` - Neo4j 插件目录
-- `mem0_history` - 历史数据库
-
-## 故障排查
-
-### 检查服务状态
+### 启动服务
 
 ```bash
 # 1Panel 部署
-docker-compose -f docker-compose.1panel.yml ps
+docker-compose -f docker-compose.1panel.yml up -d
 
-# 本地开发部署
-docker-compose ps
+# 本地开发
+docker-compose up -d
 ```
 
-### 查看日志
+## 目录结构
+
+```
+deployment/mem0/
+├── README.md                    # 本文件（快速参考）
+├── Dockerfile                   # Mem0 API Dockerfile
+├── webui.Dockerfile            # Mem0 WebUI Dockerfile
+├── docker-compose.yml           # 本地开发配置
+├── docker-compose.1panel.yml   # 1Panel 部署配置
+├── build.sh                     # API 镜像构建脚本
+├── build-webui.sh              # WebUI 镜像构建脚本
+├── patches/                     # 代码补丁
+│   ├── README.md
+│   └── cors.patch              # CORS 支持补丁
+├── webui-adapters/             # WebUI API 适配器
+│   └── *.ts                    # TypeScript 适配器文件
+├── webui-patches/              # WebUI 代码补丁
+│   ├── README.md
+│   └── *.patch                 # UI 修改补丁
+└── scripts/                    # 工具脚本
+    ├── test-api.sh
+    ├── test-api-response.sh
+    ├── test-memory-language.sh
+    ├── verify-patch.sh
+    ├── rebuild-api.sh
+    ├── rebuild-with-cors.sh
+    └── force-pull.sh
+```
+
+## 详细文档
+
+所有详细文档已移至 `docs/deployment/mem0/` 目录：
+
+- [部署指南](docs/deployment/mem0/README.md)
+- [API 对比分析](docs/deployment/mem0/API_COMPARISON_ANALYSIS.md)
+- [CORS 修复指南](docs/deployment/mem0/CORS_FIX_GUIDE.md)
+- [记忆语言问题](docs/deployment/mem0/MEMORY_LANGUAGE_ISSUE.md)
+- [WebUI 适配说明](docs/deployment/mem0/WEBUI_ADAPTATION.md)
+- [WebUI 部署清单](docs/deployment/mem0/WEBUI_DEPLOYMENT_CHECKLIST.md)
+- [强制拉取指南](docs/deployment/mem0/FORCE_PULL_GUIDE.md)
+
+## 常用命令
 
 ```bash
-# 所有服务日志
-docker-compose logs
+# 测试 API
+./scripts/test-api.sh
 
-# 特定服务日志
-docker-compose logs mem0-api
-docker-compose logs postgres
-docker-compose logs neo4j
+# 验证补丁
+./scripts/verify-patch.sh
+
+# 强制重新构建（应用 CORS）
+./scripts/rebuild-with-cors.sh
 ```
 
-### 常见问题
-
-1. **连接失败**：检查端口是否被占用
-2. **数据库连接错误**：检查环境变量配置
-3. **LLM API 错误**：检查 `OPENAI_API_KEY` 是否正确
-4. **镜像不存在**：确保已运行 `./build.sh` 和 `./build-webui.sh` 构建镜像
-5. **WebUI 无法访问 API**：检查 `NEXT_PUBLIC_API_URL` 环境变量，确保指向正确的 API 地址
-6. **WebUI 构建失败**：检查 `projects/mem0/openmemory/ui/` 目录是否存在，确保 OpenMemory UI 源代码可用
-
-## 参考
-
-- [Mem0 官方文档](https://docs.mem0.ai)
-- [Mem0 REST API 文档](https://docs.mem0.ai/open-source/features/rest-api)
-- [Mem0 Python SDK](https://pypi.org/project/mem0ai/)
