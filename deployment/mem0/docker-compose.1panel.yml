@@ -75,6 +75,9 @@ services:
     environment:
       # WebUI 通过容器名访问 API
       NEXT_PUBLIC_API_URL: http://mem0-api:8000
+      # 可选：配置默认用户 ID（默认为 "user"）
+      # 所有通过 WebUI 创建的记忆将使用此用户 ID
+      NEXT_PUBLIC_USER_ID: ${NEXT_PUBLIC_USER_ID:-user}
     depends_on:
       - mem0-api
     networks:
