@@ -57,10 +57,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy entrypoint script if it exists, otherwise create a simple one
-COPY projects/mem0/openmemory/ui/entrypoint.sh /home/nextjs/entrypoint.sh 2>/dev/null || \
-    echo '#!/bin/sh\nnode server.js' > /home/nextjs/entrypoint.sh && \
-    chmod +x /home/nextjs/entrypoint.sh
+# Copy entrypoint script from builder stage (it was copied in builder stage)
+COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh /home/nextjs/entrypoint.sh
+RUN chmod +x /home/nextjs/entrypoint.sh
 
 USER nextjs
 
