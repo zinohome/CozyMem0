@@ -1,12 +1,8 @@
---- main.py	2025-12-16 10:14:21
-+++ main.py	2025-12-16 10:14:43
-@@ -14,48 +14,41 @@
- # Load environment variables
+--- /dev/fd/12	2025-12-16 10:26:26
++++ /dev/fd/13	2025-12-16 10:26:26
+@@ -16,21 +16,11 @@
  load_dotenv()
  
-+# Qdrant 配置（专用向量数据库，高性能）
-+QDRANT_HOST = os.environ.get("QDRANT_HOST", "qdrant")
-+QDRANT_PORT = int(os.environ.get("QDRANT_PORT", "6333"))
  
 -POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "postgres")
 -POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
@@ -14,6 +10,9 @@
 -POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
 -POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
 -POSTGRES_COLLECTION_NAME = os.environ.get("POSTGRES_COLLECTION_NAME", "memories")
++# Qdrant 配置（专用向量数据库，高性能）
++QDRANT_HOST = os.environ.get("QDRANT_HOST", "qdrant")
++QDRANT_PORT = int(os.environ.get("QDRANT_PORT", "6333"))
 +QDRANT_COLLECTION_NAME = os.environ.get("QDRANT_COLLECTION_NAME", "memories")
  
 -NEO4J_URI = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
@@ -25,10 +24,9 @@
 -MEMGRAPH_PASSWORD = os.environ.get("MEMGRAPH_PASSWORD", "mem0graph")
 -
  OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
-+CUSTOM_FACT_EXTRACTION_PROMPT = os.environ.get("CUSTOM_FACT_EXTRACTION_PROMPT", "")
  HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
- 
+ OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
+@@ -39,20 +29,14 @@
  DEFAULT_CONFIG = {
      "version": "v1.1",
      "vector_store": {
@@ -50,130 +48,12 @@
 -    "graph_store": {
 -        "provider": "neo4j",
 -        "config": {"url": NEO4J_URI, "username": NEO4J_USERNAME, "password": NEO4J_PASSWORD},
-+    "llm": {
-+        "provider": "openai",
-+        "config": {
-+            "api_key": OPENAI_API_KEY,
-+            "temperature": 0.2,
-+            "model": OPENAI_MODEL,
-+            **({"custom_fact_extraction_prompt": CUSTOM_FACT_EXTRACTION_PROMPT} if CUSTOM_FACT_EXTRACTION_PROMPT else {})
-+        }
-     },
--    "llm": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "temperature": 0.2, "model": "gpt-4.1-nano-2025-04-14"}},
+-    },
+     "llm": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "temperature": 0.2, "model": OPENAI_MODEL}},
+     **({"custom_fact_extraction_prompt": CUSTOM_FACT_EXTRACTION_PROMPT} if CUSTOM_FACT_EXTRACTION_PROMPT else {}),
      "embedder": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "model": "text-embedding-3-small"}},
-     "history_db_path": HISTORY_DB_PATH,
- }
- 
--
- MEMORY_INSTANCE = Memory.from_config(DEFAULT_CONFIG)
- 
- app = FastAPI(
-@@ -64,12 +57,10 @@
-     version="1.0.0",
- )
- 
--
- class Message(BaseModel):
-     role: str = Field(..., description="Role of the message (user or assistant).")
-     content: str = Field(..., description="Message content.")
- 
--
- class MemoryCreate(BaseModel):
-     messages: List[Message] = Field(..., description="List of messages to store.")
-     user_id: Optional[str] = None
-@@ -77,7 +68,6 @@
-     run_id: Optional[str] = None
-     metadata: Optional[Dict[str, Any]] = None
- 
--
- class SearchRequest(BaseModel):
-     query: str = Field(..., description="Search query.")
-     user_id: Optional[str] = None
-@@ -85,7 +75,6 @@
-     agent_id: Optional[str] = None
-     filters: Optional[Dict[str, Any]] = None
- 
--
- @app.post("/configure", summary="Configure Mem0")
- def set_config(config: Dict[str, Any]):
-     """Set memory configuration."""
-@@ -93,7 +82,6 @@
-     MEMORY_INSTANCE = Memory.from_config(config)
-     return {"message": "Configuration set successfully"}
- 
--
- @app.post("/memories", summary="Create memories")
- def add_memory(memory_create: MemoryCreate):
-     """Store new memories."""
-@@ -108,7 +96,6 @@
-         logging.exception("Error in add_memory:")  # This will log the full traceback
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.get("/memories", summary="Get memories")
- def get_all_memories(
-     user_id: Optional[str] = None,
-@@ -127,7 +114,6 @@
-         logging.exception("Error in get_all_memories:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.get("/memories/{memory_id}", summary="Get a memory")
- def get_memory(memory_id: str):
-     """Retrieve a specific memory by ID."""
-@@ -137,7 +123,6 @@
-         logging.exception("Error in get_memory:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.post("/search", summary="Search memories")
- def search_memories(search_req: SearchRequest):
-     """Search for memories based on a query."""
-@@ -148,7 +133,6 @@
-         logging.exception("Error in search_memories:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.put("/memories/{memory_id}", summary="Update a memory")
- def update_memory(memory_id: str, updated_memory: Dict[str, Any]):
-     """Update an existing memory with new content.
-@@ -166,7 +150,6 @@
-         logging.exception("Error in update_memory:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.get("/memories/{memory_id}/history", summary="Get memory history")
- def memory_history(memory_id: str):
-     """Retrieve memory history."""
-@@ -176,7 +159,6 @@
-         logging.exception("Error in memory_history:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.delete("/memories/{memory_id}", summary="Delete a memory")
- def delete_memory(memory_id: str):
-     """Delete a specific memory by ID."""
-@@ -187,7 +169,6 @@
-         logging.exception("Error in delete_memory:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.delete("/memories", summary="Delete all memories")
- def delete_all_memories(
-     user_id: Optional[str] = None,
-@@ -207,7 +188,6 @@
-         logging.exception("Error in delete_all_memories:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.post("/reset", summary="Reset all memories")
- def reset_memory():
-     """Completely reset stored memories."""
-@@ -218,7 +198,6 @@
-         logging.exception("Error in reset_memory:")
-         raise HTTPException(status_code=500, detail=str(e))
- 
--
- @app.get("/", summary="Redirect to the OpenAPI documentation", include_in_schema=False)
+@@ -242,3 +226,4 @@
  def home():
      """Redirect to the OpenAPI documentation."""
+     return RedirectResponse(url="/docs")
++
