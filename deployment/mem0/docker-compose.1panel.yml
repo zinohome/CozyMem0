@@ -33,19 +33,13 @@ services:
       # 如果希望保持中文记忆不被翻译，可以设置：
       # "请保持记忆内容的原始语言，不要将中文翻译为英文。如果输入是中文，输出也应该是中文。"
       CUSTOM_FACT_EXTRACTION_PROMPT: ${CUSTOM_FACT_EXTRACTION_PROMPT:-}
-      # ==================== 数据库配置 ====================
-      # PostgreSQL 配置（使用 pgvector 扩展）
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: mem0
-      POSTGRES_USER: mem0
-      POSTGRES_PASSWORD: mem0password
-      POSTGRES_COLLECTION_NAME: memories
-      # ==================== 图数据库配置 ====================
-      # Neo4j 配置
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USERNAME: neo4j
-      NEO4J_PASSWORD: mem0graph
+      # ==================== 向量数据库配置 ====================
+      # Qdrant 配置（专用向量数据库，高性能）
+      # 注意：已从 pgvector 切换到 Qdrant，移除 Neo4j 图数据库
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION_NAME: memories
       # ==================== 历史数据库配置 ====================
       HISTORY_DB_PATH: /app/history/history.db
       # ==================== CORS 配置 ====================
@@ -53,10 +47,8 @@ services:
       # 默认包含常见的本地和服务器地址
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000,http://192.168.66.11:3000,http://192.168.66.11:4000}
     depends_on:
-      postgres:
-        condition: service_healthy  # 等待 PostgreSQL 健康检查通过
-      neo4j:
-        condition: service_healthy  # 等待 Neo4j 健康检查通过
+      qdrant:
+        condition: service_healthy  # 等待 Qdrant 健康检查通过
     volumes:
       - /data/mem0/history:/app/history
       - /data/mem0/logs:/app/logs
@@ -85,63 +77,26 @@ services:
     labels:
       createdBy: "Apps"
 
-  # PostgreSQL 关系数据库（使用带 pgvector 扩展的镜像）
-  # 注意：向量数据也存储在此数据库中
-  postgres:
-    image: pgvector/pgvector:0.8.1-pg17-trixie
-    container_name: mem0_postgres
+  # Qdrant 向量数据库（专用向量数据库，高性能）
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mem0_qdrant
     restart: unless-stopped
     ports:
-      - "8432:5432"
-    environment:
-      POSTGRES_USER: mem0
-      POSTGRES_PASSWORD: mem0password
-      POSTGRES_DB: mem0
-      PGDATA: /var/lib/postgresql/data/pgdata
+      - "6333:6333"  # REST API
+      - "6334:6334"  # gRPC
     volumes:
-      - /data/mem0/postgres:/var/lib/postgresql/data
+      - /data/mem0/qdrant:/qdrant/storage
     networks:
       - 1panel-network
     labels:
       createdBy: "Apps"
     healthcheck:
-      # pg_isready 不需要密码，只检查服务器是否监听
-      # 如果需要更严格的检查（验证密码认证），可以使用：
-      # test: ["CMD-SHELL", "psql -U mem0 -d mem0 -c 'SELECT 1;'"]
-      test: ["CMD-SHELL", "pg_isready -U mem0 -d mem0"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6333/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-
-  # Neo4j 图数据库
-  neo4j:
-    image: neo4j:latest
-    container_name: mem0_neo4j
-    restart: unless-stopped
-    ports:
-      - "8474:7474"  # HTTP
-      - "8687:7687"  # Bolt
-    environment:
-      NEO4J_AUTH: neo4j/mem0graph
-      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
-      NEO4J_dbms_memory_heap_initial__size: 512m
-      NEO4J_dbms_memory_heap_max__size: 2G
-    volumes:
-      - /data/mem0/neo4j/data:/data
-      - /data/mem0/neo4j/logs:/logs
-      - /data/mem0/neo4j/import:/var/lib/neo4j/import
-      - /data/mem0/neo4j/plugins:/plugins
-    networks:
-      - 1panel-network
-    labels:
-      createdBy: "Apps"
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "mem0graph", "RETURN 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
 networks:
   1panel-network:

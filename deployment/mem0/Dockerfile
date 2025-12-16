@@ -2,13 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# 安装系统依赖（psycopg 需要编译，需要 libpq-dev 和 python3-dev，patch 用于应用补丁）
+# 安装系统依赖（patch 和 wget 用于应用补丁和健康检查）
 RUN apt-get update && apt-get install -y \
-    gcc \
-    postgresql-client \
-    libpq-dev \
-    python3-dev \
     patch \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
@@ -24,9 +21,11 @@ COPY projects/mem0/server/ .
 COPY deployment/mem0/patches/cors.patch /tmp/cors.patch
 COPY deployment/mem0/patches/chinese-language-support.patch /tmp/chinese-language-support.patch
 COPY deployment/mem0/patches/fix-json-prompt.patch /tmp/fix-json-prompt.patch
+COPY deployment/mem0/patches/switch-to-qdrant.patch /tmp/switch-to-qdrant.patch
 RUN cd /app && \
     patch -p0 < /tmp/cors.patch || (echo "Warning: CORS patch failed, continuing..." && true) && \
     patch -p0 < /tmp/chinese-language-support.patch || (echo "Warning: Chinese language support patch failed, continuing..." && true) && \
+    patch -p0 < /tmp/switch-to-qdrant.patch || (echo "Warning: Switch to Qdrant patch failed, continuing..." && true) && \
     (MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.dirname(mem0.memory.main.__file__))") && \
      patch -p1 -d "$MEM0_PATH" < /tmp/fix-json-prompt.patch || echo "Warning: JSON prompt fix patch failed, continuing...") && \
     true
