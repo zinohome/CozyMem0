@@ -73,7 +73,7 @@ services:
 
   # Qdrant 向量数据库（专用向量数据库，高性能）
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.15
     container_name: mem0_qdrant
     restart: unless-stopped
     ports:
