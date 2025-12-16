@@ -31,7 +31,10 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing services...")
     
     # 初始化客户端
-    openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+    openai_kwargs = {"api_key": settings.openai_api_key}
+    if settings.openai_base_url:
+        openai_kwargs["base_url"] = settings.openai_base_url
+    openai_client = AsyncOpenAI(**openai_kwargs)
     cognee_client = CogneeClientWrapper()
     memobase_client = MemobaseClientWrapper()
     mem0_client = Mem0ClientWrapper()

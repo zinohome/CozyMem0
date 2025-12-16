@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     openai_api_key: str
+    openai_base_url: Optional[str] = None
     openai_model: str = "gpt-4"
     
     # Cognee

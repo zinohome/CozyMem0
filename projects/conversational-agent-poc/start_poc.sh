@@ -2,9 +2,9 @@
 # 启动 POC 服务的脚本
 
 # 设置服务地址（根据您提供的地址）
-export COGNEE_API_URL="http://192.168.66.11:8888"
+export COGNEE_API_URL="http://192.168.66.11:8000"
 export MEMOBASE_PROJECT_URL="http://192.168.66.11:8019"
-export MEM0_API_URL="http://192.168.66.11:8000"
+export MEM0_API_URL="http://192.168.66.11:8888"
 
 # 检查 OpenAI API Key
 if [ -z "$OPENAI_API_KEY" ]; then
@@ -24,6 +24,10 @@ fi
 
 # 设置其他可选配置
 export OPENAI_MODEL="${OPENAI_MODEL:-gpt-4}"
+# OpenAI Base URL（可选，如果使用自定义 OpenAI 兼容 API）
+if [ -n "$OPENAI_BASE_URL" ]; then
+    echo "使用自定义 OpenAI Base URL: $OPENAI_BASE_URL"
+fi
 export APP_HOST="${APP_HOST:-0.0.0.0}"
 export APP_PORT="${APP_PORT:-8080}"
 export LOG_LEVEL="${LOG_LEVEL:-INFO}"
@@ -34,6 +38,9 @@ echo "=========================================="
 echo "Cognee URL: $COGNEE_API_URL"
 echo "Memobase URL: $MEMOBASE_PROJECT_URL"
 echo "Mem0 URL: $MEM0_API_URL"
+if [ -n "$OPENAI_BASE_URL" ]; then
+    echo "OpenAI Base URL: $OPENAI_BASE_URL"
+fi
 echo "服务地址: http://$APP_HOST:$APP_PORT"
 echo "=========================================="
 echo ""

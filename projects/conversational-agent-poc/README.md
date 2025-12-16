@@ -26,7 +26,28 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，设置必要的配置。
+编辑 `.env` 文件，设置必要的配置：
+
+```bash
+# 必需配置
+OPENAI_API_KEY=your-openai-api-key-here
+
+# 可选配置（如果使用自定义 OpenAI 兼容 API）
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4
+
+# 服务地址（已配置在启动脚本中）
+COGNEE_API_URL=http://192.168.66.11:8000
+MEMOBASE_PROJECT_URL=http://192.168.66.11:8019
+MEM0_API_URL=http://192.168.66.11:8888
+```
+
+或者使用环境变量：
+
+```bash
+export OPENAI_API_KEY='your-api-key-here'
+export OPENAI_BASE_URL='https://api.openai.com/v1'  # 可选
+```
 
 ### 3. 启动服务
 
