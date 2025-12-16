@@ -15,7 +15,10 @@ IMAGE_NAME="mem0-api"
 IMAGE_TAG="${1:-latest}"
 
 echo "Building Mem0 API Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-echo "注意：构建过程会自动应用 CORS 和中文语言支持补丁"
+echo "注意：构建过程会自动应用以下补丁："
+echo "  - CORS 支持补丁"
+echo "  - 中文语言支持补丁"
+echo "  - Qdrant 切换补丁（从 pgvector+Neo4j 切换到 Qdrant）"
 echo ""
 
 # 验证补丁文件存在
@@ -27,6 +30,12 @@ fi
 if [ ! -f "$SCRIPT_DIR/patches/chinese-language-support.patch" ]; then
     echo "⚠️  警告：中文语言支持补丁文件不存在: $SCRIPT_DIR/patches/chinese-language-support.patch"
     echo "   构建将继续，但中文语言支持可能不可用"
+fi
+
+if [ ! -f "$SCRIPT_DIR/patches/switch-to-qdrant.patch" ]; then
+    echo "❌ 错误：Qdrant 切换补丁文件不存在: $SCRIPT_DIR/patches/switch-to-qdrant.patch"
+    echo "   构建将失败！"
+    exit 1
 fi
 
 # 构建镜像
@@ -57,6 +66,13 @@ if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" grep -q "CUSTOM_FACT_EXTRACTION_
     echo "✅ 中文语言支持配置已包含"
 else
     echo "⚠️  警告：未找到中文语言支持配置，补丁可能未成功应用"
+fi
+
+if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" grep -q "provider.*qdrant" /app/main.py 2>/dev/null; then
+    echo "✅ Qdrant 配置已包含"
+else
+    echo "❌ 错误：未找到 Qdrant 配置，补丁可能未成功应用"
+    exit 1
 fi
 
 echo ""
