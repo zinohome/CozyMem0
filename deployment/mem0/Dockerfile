@@ -18,16 +18,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY projects/mem0/server/ .
 
 # 应用补丁（在构建时应用，不修改源文件）
-COPY deployment/mem0/patches/cors.patch /tmp/cors.patch
-COPY deployment/mem0/patches/chinese-language-support.patch /tmp/chinese-language-support.patch
+# 使用合并补丁文件，包含所有修改（CORS、中文语言支持、Qdrant、API 前缀）
+COPY deployment/mem0/patches/all-in-one.patch /tmp/all-in-one.patch
 COPY deployment/mem0/patches/fix-json-prompt.patch /tmp/fix-json-prompt.patch
-COPY deployment/mem0/patches/switch-to-qdrant.patch /tmp/switch-to-qdrant.patch
-COPY deployment/mem0/patches/add-api-prefix.patch /tmp/add-api-prefix.patch
 RUN cd /app && \
-    patch -p0 < /tmp/cors.patch || (echo "Warning: CORS patch failed, continuing..." && true) && \
-    patch -p0 < /tmp/chinese-language-support.patch || (echo "Warning: Chinese language support patch failed, continuing..." && true) && \
-    patch -p0 < /tmp/switch-to-qdrant.patch || (echo "ERROR: Switch to Qdrant patch failed!" && exit 1) && \
-    patch -p0 < /tmp/add-api-prefix.patch || (echo "ERROR: Add API prefix patch failed!" && exit 1) && \
+    patch -p0 < /tmp/all-in-one.patch || (echo "ERROR: All-in-one patch failed!" && exit 1) && \
     (MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.dirname(mem0.memory.main.__file__))") && \
      patch -p1 -d "$MEM0_PATH" < /tmp/fix-json-prompt.patch || echo "Warning: JSON prompt fix patch failed, continuing...") && \
     true
