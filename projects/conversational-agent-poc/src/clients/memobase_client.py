@@ -36,7 +36,9 @@ class MemobaseClientWrapper:
             )
             return profile if profile else {}
         except Exception as e:
-            print(f"Error getting user profile: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting user profile: {e}", exc_info=True)
             return {}
     
     def extract_and_update_profile(
@@ -57,5 +59,7 @@ class MemobaseClientWrapper:
             user.insert(blob)
             user.flush()
         except Exception as e:
-            print(f"Error updating user profile: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error updating user profile: {e}", exc_info=True)
 

@@ -51,7 +51,9 @@ class CogneeClientWrapper:
                 for result in results
             ]
         except Exception as e:
-            print(f"Error searching knowledge: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error searching knowledge: {e}", exc_info=True)
             return []
     
     async def close(self):

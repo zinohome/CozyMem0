@@ -62,16 +62,24 @@ class ConversationEngine:
             return_exceptions=True
         )
         
-        # 处理异常
+        # 处理异常并记录详细信息
         if isinstance(user_profile, Exception):
-            logger.warning(f"Failed to get user profile: {user_profile}")
+            logger.error(f"Failed to get user profile: {user_profile}", exc_info=user_profile)
             user_profile = {}
+        else:
+            logger.info(f"Retrieved user profile: {len(user_profile)} fields")
+        
         if isinstance(session_memories, Exception):
-            logger.warning(f"Failed to get session memories: {session_memories}")
+            logger.error(f"Failed to get session memories: {session_memories}", exc_info=session_memories)
             session_memories = []
+        else:
+            logger.info(f"Retrieved {len(session_memories)} session memories")
+        
         if isinstance(knowledge_results, Exception):
-            logger.warning(f"Failed to get knowledge: {knowledge_results}")
+            logger.error(f"Failed to get knowledge: {knowledge_results}", exc_info=knowledge_results)
             knowledge_results = []
+        else:
+            logger.info(f"Retrieved {len(knowledge_results)} knowledge results")
         
         # 步骤 4：构建 Prompt
         prompt = build_conversation_prompt(
@@ -115,7 +123,12 @@ class ConversationEngine:
                 "session_memories_count": len(session_memories),
                 "knowledge_count": len(knowledge_results),
                 "session_memories": session_memories[:5],  # 只返回前5条
-                "knowledge": knowledge_results[:3]  # 只返回前3条
+                "knowledge": knowledge_results[:3],  # 只返回前3条
+                "debug": {
+                    "profile_error": str(user_profile) if isinstance(user_profile, Exception) else None,
+                    "memories_error": str(session_memories) if isinstance(session_memories, Exception) else None,
+                    "knowledge_error": str(knowledge_results) if isinstance(knowledge_results, Exception) else None
+                } if any(isinstance(x, Exception) for x in [user_profile, session_memories, knowledge_results]) else None
             }
         }
     

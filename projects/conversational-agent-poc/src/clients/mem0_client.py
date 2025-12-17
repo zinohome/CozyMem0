@@ -10,11 +10,21 @@ class Mem0ClientWrapper:
     
     def __init__(self):
         # mem0 服务器使用 /api/v1 前缀（通过补丁添加）
-        self.base_url = settings.mem0_api_url.rstrip('/')
-        self.client = httpx.AsyncClient(
-            base_url=self.base_url,
-            timeout=30.0
-        ) if settings.mem0_api_url else None
+        # 注意：mem0_api_key 是可选的，即使没有 key 也可以使用本地服务器
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if not settings.mem0_api_url:
+            logger.warning("Mem0 API URL not configured, mem0 client will be disabled")
+            self.base_url = None
+            self.client = None
+        else:
+            self.base_url = settings.mem0_api_url.rstrip('/')
+            self.client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=30.0
+            )
+            logger.info(f"Mem0 client initialized with URL: {self.base_url}")
     
     async def get_conversation_context(
         self,
@@ -126,9 +136,9 @@ class Mem0ClientWrapper:
             memories.sort(key=lambda x: x.get("timestamp", "") or "", reverse=True)
             return memories[:15]
         except Exception as e:
-            print(f"Error getting conversation context: {e}")
-            import traceback
-            traceback.print_exc()
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting conversation context: {e}", exc_info=True)
             return []
     
     async def save_conversation(
@@ -182,9 +192,9 @@ class Mem0ClientWrapper:
             response = await self.client.post("/api/v1/memories", json=payload)
             response.raise_for_status()
         except Exception as e:
-            print(f"Error saving conversation: {e}")
-            import traceback
-            traceback.print_exc()
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error saving conversation: {e}", exc_info=True)
     
     async def close(self):
         """关闭客户端"""

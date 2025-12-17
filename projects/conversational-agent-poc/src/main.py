@@ -29,15 +29,23 @@ async def lifespan(app: FastAPI):
     
     # 启动时初始化
     logger.info("Initializing services...")
+    logger.info(f"Cognee URL: {settings.cognee_api_url}")
+    logger.info(f"Memobase URL: {settings.memobase_project_url}")
+    logger.info(f"Mem0 URL: {settings.mem0_api_url}")
     
     # 初始化客户端
     openai_kwargs = {"api_key": settings.openai_api_key}
     if settings.openai_base_url:
         openai_kwargs["base_url"] = settings.openai_base_url
+        logger.info(f"OpenAI Base URL: {settings.openai_base_url}")
     openai_client = AsyncOpenAI(**openai_kwargs)
     cognee_client = CogneeClientWrapper()
     memobase_client = MemobaseClientWrapper()
     mem0_client = Mem0ClientWrapper()
+    
+    # 检查客户端初始化状态
+    if not mem0_client.client:
+        logger.warning("Mem0 client is not initialized (mem0_api_url may be empty)")
     
     # 初始化对话引擎
     conversation_engine = ConversationEngine(
@@ -193,6 +201,37 @@ async def get_user_profile(user_id: str):
     except Exception as e:
         logger.error(f"Error getting user profile: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/debug/status")
+async def debug_status():
+    """
+    调试接口：查看服务状态和配置
+    """
+    if not conversation_engine:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    return JSONResponse(content={
+        "success": True,
+        "services": {
+            "cognee": {
+                "url": settings.cognee_api_url,
+                "initialized": conversation_engine.knowledge_service.cognee.client is not None
+            },
+            "memobase": {
+                "url": settings.memobase_project_url,
+                "initialized": conversation_engine.profile_service.memobase.client is not None
+            },
+            "mem0": {
+                "url": settings.mem0_api_url,
+                "initialized": conversation_engine.memory_service.mem0.client is not None
+            },
+            "openai": {
+                "model": settings.openai_model,
+                "base_url": settings.openai_base_url or "default"
+            }
+        }
+    })
 
 
 if __name__ == "__main__":
