@@ -4,6 +4,7 @@
 # 设置服务地址（根据您提供的地址）
 export COGNEE_API_URL="http://192.168.66.11:8000"
 export MEMOBASE_PROJECT_URL="http://192.168.66.11:8019"
+export MEMOBASE_API_KEY="${MEMOBASE_API_KEY:-secret}"
 export MEM0_API_URL="http://192.168.66.11:8888"
 
 # 检查 OpenAI API Key
