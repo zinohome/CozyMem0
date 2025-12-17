@@ -70,11 +70,16 @@ class Mem0ClientWrapper:
             )
             
             memories = []
+            import logging
+            logger = logging.getLogger(__name__)
             
             # 处理当前会话记忆
-            if not isinstance(current_memories_resp, Exception):
+            if isinstance(current_memories_resp, Exception):
+                logger.warning(f"Current session search failed: {current_memories_resp}")
+            elif not isinstance(current_memories_resp, Exception):
                 current_memories_resp.raise_for_status()
                 current_data = current_memories_resp.json()
+                logger.debug(f"Mem0 current session response: {current_data}")
                 # mem0 返回的格式：直接是列表，每个元素包含 memory 字段
                 if isinstance(current_data, list):
                     for item in current_data[:10]:
@@ -103,10 +108,13 @@ class Mem0ClientWrapper:
                             "timestamp": current_data.get("created_at", current_data.get("timestamp"))
                         })
             
+            logger.debug(f"After processing current session: {len(memories)} memories")
+            
             # 处理跨会话记忆
             if not isinstance(cross_memories_resp, Exception):
                 cross_memories_resp.raise_for_status()
                 cross_data = cross_memories_resp.json()
+                logger.debug(f"Mem0 cross session response: {cross_data}")
                 if isinstance(cross_data, list):
                     for item in cross_data[:5]:
                         memories.append({
@@ -133,9 +141,13 @@ class Mem0ClientWrapper:
                             "timestamp": cross_data.get("created_at", cross_data.get("timestamp"))
                         })
             
+            logger.debug(f"After processing cross session: {len(memories)} memories")
+            
             # 按时间排序
             memories.sort(key=lambda x: x.get("timestamp", "") or "", reverse=True)
-            return memories[:15]
+            final_memories = memories[:15]
+            logger.info(f"Mem0 returning {len(final_memories)} memories for user {user_id}")
+            return final_memories
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)

@@ -1,0 +1,499 @@
+{
+  "test_time": "2025-12-17T17:42:24.208303",
+  "total_tests": 17,
+  "success_count": 15,
+  "failure_count": 2,
+  "results": [
+    {
+      "name": "Cognee Health Check",
+      "description": "Cognee服务健康检查",
+      "method": "GET",
+      "url": "http://192.168.66.11:8000/health",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:07.751660",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "status": "ready",
+        "health": "healthy",
+        "version": "0.4.1-local"
+      },
+      "error": null
+    },
+    {
+      "name": "Cognee Search Knowledge",
+      "description": "从Cognee知识库搜索知识（数据集: kb_tech）",
+      "method": "POST",
+      "url": "http://192.168.66.11:8000/api/v1/search",
+      "request_data": {
+        "query": "Python编程基础",
+        "datasets": [
+          "kb_tech"
+        ],
+        "search_type": "GRAPH_COMPLETION",
+        "top_k": 5
+      },
+      "timestamp": "2025-12-17T17:41:09.756825",
+      "success": true,
+      "status_code": 200,
+      "response": [
+        "Python 是一种高级、解释型、通用的编程语言，强调代码可读性和简洁性。基本语法包括变量与数据类型（整数、浮点数、字符串、布尔值）、运算符（算术、比较、逻辑）、控制流语句（if、for、while）和输入输出（使用 print() 和 input() 函数）。此外，Python 支持错误处理机制，允许通过 try-except 语句处理异常，以编写健壮的程序。"
+      ],
+      "error": null
+    },
+    {
+      "name": "Cognee List Datasets",
+      "description": "列出Cognee中的所有数据集",
+      "method": "GET",
+      "url": "http://192.168.66.11:8000/api/v1/datasets",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:21.201247",
+      "success": true,
+      "status_code": 200,
+      "response": [
+        {
+          "id": "432ee6e2-454b-53ab-9974-3bd4c5f9831b",
+          "name": "kb_tech",
+          "createdAt": "2025-12-17T09:10:15.572827Z",
+          "updatedAt": null,
+          "ownerId": "73ab78eb-b9cf-471f-9f87-dce6b6b95b9e"
+        }
+      ],
+      "error": null
+    },
+    {
+      "name": "Memobase Health Check",
+      "description": "Memobase服务健康检查（如果支持）",
+      "method": "GET",
+      "url": "http://192.168.66.11:8019/health",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:21.243620",
+      "success": false,
+      "status_code": 404,
+      "response": {
+        "detail": "Not Found"
+      },
+      "error": "HTTP 404"
+    },
+    {
+      "name": "Mem0 Health Check",
+      "description": "Mem0服务健康检查",
+      "method": "GET",
+      "url": "http://192.168.66.11:8888/health",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:21.298048",
+      "success": false,
+      "status_code": 404,
+      "response": {
+        "detail": "Not Found"
+      },
+      "error": "HTTP 404"
+    },
+    {
+      "name": "Mem0 Search Memories (Current Session)",
+      "description": "搜索当前会话的记忆",
+      "method": "POST",
+      "url": "http://192.168.66.11:8888/api/v1/search",
+      "request_data": {
+        "query": "用户信息",
+        "user_id": "test_user_001",
+        "agent_id": "test_session_001"
+      },
+      "timestamp": "2025-12-17T17:41:21.351846",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "results": []
+      },
+      "error": null
+    },
+    {
+      "name": "Mem0 Search Memories (Cross Session)",
+      "description": "搜索跨会话的记忆",
+      "method": "POST",
+      "url": "http://192.168.66.11:8888/api/v1/search",
+      "request_data": {
+        "query": "用户信息",
+        "user_id": "test_user_001"
+      },
+      "timestamp": "2025-12-17T17:41:22.687808",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "results": [
+          {
+            "id": "07479764-f267-438e-a192-0d2f80de2e61",
+            "memory": "Name is 测试用户",
+            "hash": "e822a25bcd9e5e75a6f1486a01b91450",
+            "metadata": null,
+            "score": 0.45364118,
+            "created_at": "2025-12-17T01:24:46.711307-08:00",
+            "updated_at": null,
+            "user_id": "test_user_001"
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "Mem0 Create Memory",
+      "description": "创建新的记忆",
+      "method": "POST",
+      "url": "http://192.168.66.11:8888/api/v1/memories",
+      "request_data": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "我是测试用户，喜欢Python编程"
+          },
+          {
+            "role": "assistant",
+            "content": "好的，我记住了"
+          }
+        ],
+        "user_id": "test_user_001",
+        "agent_id": "test_session_001"
+      },
+      "timestamp": "2025-12-17T17:41:23.424133",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "results": [
+          {
+            "id": "1d941335-7eff-463d-9129-738b52d8f01c",
+            "memory": "喜欢Python编程",
+            "event": "ADD"
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "Mem0 Search Memories (After Create)",
+      "description": "创建记忆后再次搜索，验证记忆是否保存成功",
+      "method": "POST",
+      "url": "http://192.168.66.11:8888/api/v1/search",
+      "request_data": {
+        "query": "Python编程",
+        "user_id": "test_user_001",
+        "agent_id": "test_session_001"
+      },
+      "timestamp": "2025-12-17T17:41:27.442863",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "results": [
+          {
+            "id": "1d941335-7eff-463d-9129-738b52d8f01c",
+            "memory": "喜欢Python编程",
+            "hash": "96ca3252066b2dd050fc5212e1e7827c",
+            "metadata": null,
+            "score": 0.6552235,
+            "created_at": "2025-12-17T01:41:27.890583-08:00",
+            "updated_at": null,
+            "user_id": "test_user_001",
+            "agent_id": "test_session_001"
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "POC Root",
+      "description": "POC项目根路径",
+      "method": "GET",
+      "url": "http://localhost:8080/",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:28.246758",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "name": "Conversational Agent POC",
+        "version": "0.1.0",
+        "status": "running"
+      },
+      "error": null
+    },
+    {
+      "name": "POC Health Check",
+      "description": "POC服务健康检查",
+      "method": "GET",
+      "url": "http://localhost:8080/health",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:28.253129",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "status": "healthy"
+      },
+      "error": null
+    },
+    {
+      "name": "POC Debug Status",
+      "description": "查看POC服务状态和配置",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/debug/status",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:28.254348",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "services": {
+          "cognee": {
+            "url": "http://192.168.66.11:8000",
+            "initialized": true
+          },
+          "memobase": {
+            "url": "http://192.168.66.11:8019",
+            "initialized": true
+          },
+          "mem0": {
+            "url": "http://192.168.66.11:8888",
+            "initialized": true
+          },
+          "openai": {
+            "model": "gpt-4",
+            "base_url": "https://oneapi.naivehero.top/v1"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "POC First Conversation",
+      "description": "第一次对话，创建用户画像和记忆",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/test/conversation",
+      "request_data": {
+        "user_id": "test_user_001",
+        "session_id": "test_session_001",
+        "message": "你好，我是测试用户，我是一名软件工程师，对Python很感兴趣",
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "timestamp": "2025-12-17T17:41:28.255689",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "user_id": "test_user_001",
+        "session_id": "test_session_001",
+        "message": "你好，我是测试用户，我是一名软件工程师，对Python很感兴趣",
+        "response": "你好，测试用户！很高兴知道你对Python编程语言有着浓厚的兴趣。Python是一种强大而灵活的语言，对于软件工程师来说是一种很好的工具。由于你已经是一名软件工程师，我相信你已经具备了一些编程基础。你可以从进一步研究Python的基础语法和编程概念开始，这将有助于你更深入地理解和使用这门语言。如果你在学习过程中遇到任何问题，随时向我提问，我会尽力帮助你。",
+        "context": {
+          "user_profile": {},
+          "session_memories_count": 3,
+          "knowledge_count": 1,
+          "session_memories": [
+            {
+              "content": "喜欢Python编程",
+              "type": "semantic",
+              "session": "current",
+              "timestamp": "2025-12-17T01:41:27.890583-08:00"
+            },
+            {
+              "content": "喜欢Python编程",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:27.890583-08:00"
+            },
+            {
+              "content": "Name is 测试用户",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:24:46.711307-08:00"
+            }
+          ],
+          "knowledge": [
+            {
+              "content": "你好！Python是一种高级、解释型的编程语言，由Guido van Rossum于1991年创建。它以其可读性和简洁性而闻名，适合各类开发任务，包括软件工程。如果你对Python感兴趣，有很多资源可以开始学习基础语法和编程概念。",
+              "score": 1.0,
+              "source": "kb_tech"
+            }
+          ],
+          "debug": null
+        },
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "POC Get User Profile",
+      "description": "获取用户画像",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/users/test_user_001/profile",
+      "request_data": null,
+      "timestamp": "2025-12-17T17:41:48.216393",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "user_id": "test_user_001",
+        "profile": {}
+      },
+      "error": null
+    },
+    {
+      "name": "POC Second Conversation (Memory Test)",
+      "description": "第二次对话，测试记忆功能",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/test/conversation",
+      "request_data": {
+        "user_id": "test_user_001",
+        "session_id": "test_session_001",
+        "message": "我之前说过我的职业是什么？",
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "timestamp": "2025-12-17T17:41:48.266716",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "user_id": "test_user_001",
+        "session_id": "test_session_001",
+        "message": "我之前说过我的职业是什么？",
+        "response": "对不起，我们之前的对话中并没有提到您的职业。能否再次告诉我您的职业呢？",
+        "context": {
+          "user_profile": {},
+          "session_memories_count": 3,
+          "knowledge_count": 1,
+          "session_memories": [
+            {
+              "content": "喜欢Python编程",
+              "type": "semantic",
+              "session": "current",
+              "timestamp": "2025-12-17T01:41:27.890583-08:00"
+            },
+            {
+              "content": "喜欢Python编程",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:27.890583-08:00"
+            },
+            {
+              "content": "Name is 测试用户",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:24:46.711307-08:00"
+            }
+          ],
+          "knowledge": [
+            {
+              "content": "There is no information provided in the context about your specific career.",
+              "score": 1.0,
+              "source": "kb_tech"
+            }
+          ],
+          "debug": null
+        },
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "POC New Session (Cross-Session Memory)",
+      "description": "新会话，测试跨会话记忆",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/test/conversation",
+      "request_data": {
+        "user_id": "test_user_001",
+        "session_id": "test_session_002",
+        "message": "你还记得我的职业吗？",
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "timestamp": "2025-12-17T17:42:01.070309",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "user_id": "test_user_001",
+        "session_id": "test_session_002",
+        "message": "你还记得我的职业吗？",
+        "response": "当然，你是一名软件工程师。",
+        "context": {
+          "user_profile": {},
+          "session_memories_count": 5,
+          "knowledge_count": 1,
+          "session_memories": [
+            {
+              "content": "对Python很感兴趣",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:55.215802-08:00"
+            },
+            {
+              "content": "Is a 软件工程师",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:55.203478-08:00"
+            },
+            {
+              "content": "Name is 测试用户",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:55.170029-08:00"
+            },
+            {
+              "content": "喜欢Python编程",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:41:27.890583-08:00"
+            },
+            {
+              "content": "Name is 测试用户",
+              "type": "semantic",
+              "session": "cross",
+              "timestamp": "2025-12-17T01:24:46.711307-08:00"
+            }
+          ],
+          "knowledge": [
+            {
+              "content": "你的职业是音频模型的创建者，具体来说是原始的Icefall ASR Zipformer模型的创作者。",
+              "score": 1.0,
+              "source": "kb_tech"
+            }
+          ],
+          "debug": null
+        },
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "POC Send Message (Standard API)",
+      "description": "发送消息并获取响应（标准接口）",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/conversations/test_session_001/messages",
+      "request_data": {
+        "message": "Python有哪些常用的数据结构？",
+        "user_id": "test_user_001",
+        "session_id": "test_session_001",
+        "dataset_names": [
+          "kb_tech"
+        ]
+      },
+      "timestamp": "2025-12-17T17:42:09.236355",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "session_id": "test_session_001",
+        "response": "Python常用的数据结构包括：\n\n1. **列表 (List)** - 有序、可变的元素集合。\n2. **元组 (Tuple)** - 有序、不可变的元素集合。\n3. **字典 (Dict)** - 键值对的集合，键唯一且不可变。\n4. **集合 (Set)** - 无序、不重复元素的集合。 \n\n此外，还有 **namedtuple**、**defaultdict** 和 **frozenset** 等特定用途的数据结构。",
+        "timestamp": "2024-01-01T00:00:00Z"
+      },
+      "error": null
+    }
+  ]
+}

@@ -42,14 +42,32 @@ class CogneeClientWrapper:
                 top_k=top_k
             )
             
-            return [
-                {
-                    "content": result.content,
-                    "score": result.score,
-                    "source": dataset_names[0] if dataset_names else "unknown"
-                }
-                for result in results
-            ]
+            # Cognee SDK 返回的是字符串列表
+            knowledge_results = []
+            for i, result in enumerate(results):
+                if isinstance(result, str):
+                    # 字符串格式
+                    knowledge_results.append({
+                        "content": result,
+                        "score": 1.0 - (i * 0.1),  # 按顺序递减分数
+                        "source": dataset_names[0] if dataset_names else "unknown"
+                    })
+                elif hasattr(result, 'content'):
+                    # 对象格式
+                    knowledge_results.append({
+                        "content": result.content,
+                        "score": getattr(result, 'score', 1.0),
+                        "source": dataset_names[0] if dataset_names else "unknown"
+                    })
+                elif isinstance(result, dict):
+                    # 字典格式
+                    knowledge_results.append({
+                        "content": result.get("content", str(result)),
+                        "score": result.get("score", 1.0),
+                        "source": dataset_names[0] if dataset_names else "unknown"
+                    })
+            
+            return knowledge_results
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
