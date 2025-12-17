@@ -113,7 +113,7 @@
      """Completely reset stored memories."""
      try:
 @@ -208,6 +212,9 @@
-         raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
  
  
 +# 将 API 路由器注册到应用
