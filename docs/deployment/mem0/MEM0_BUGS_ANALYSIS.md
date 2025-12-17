@@ -76,25 +76,33 @@
 **修复方案**：
 - 使用 `existing_memory.payload.get("user_id")` 替代直接访问
 
-## 修复补丁
+## 修复方案
 
-所有修复都包含在 `deployment/mem0/patches/fix-all-memory-bugs.patch` 文件中。
+所有修复都包含在 `deployment/mem0/patches/apply_memory_fixes.py` Python 脚本中。
 
-### 补丁内容
+**为什么使用 Python 脚本而不是 diff 补丁？**
+- 更可靠：字符串匹配比 diff 行号匹配更稳定
+- 更易维护：Python 代码比 diff 格式更易读
+- 更好的错误处理：可以报告具体哪些修复成功/失败
 
-1. **修复 temp_uuid_mapping 访问**（同步和异步版本）
-   - UPDATE 事件：检查 key 是否存在，不存在则转换为 ADD
-   - DELETE 事件：检查 key 是否存在，不存在则跳过
+### 修复内容（共 15 个修复）
 
-2. **修复 JSON 解析**
+1. **JSON 关键字检查**（2 个）
+   - 确保 custom_fact_extraction_prompt 包含 "json" 关键字
+
+2. **JSON 解析安全访问**（2 个）
    - 使用 `.get("facts", [])` 替代 `["facts"]`
 
-3. **修复 vector_store.get None 检查**
+3. **temp_uuid_mapping 安全访问**（4 个）
+   - UPDATE 事件：检查 key 是否存在，不存在则转换为 ADD
+   - DELETE 事件：检查 key 是否存在，不存在则跳过
+   - 同步和异步版本分别修复
+
+4. **vector_store.get None 检查**（2 个）
    - 在 NONE 事件处理中添加 None 检查
-   - 在 _update_memory 方法中添加 None 检查
    - 在异步版本中添加 None 检查
 
-4. **修复 payload 访问**
+5. **payload 安全访问**（5 个）
    - 使用 `.get()` 替代直接访问
 
 ## 应用补丁
@@ -102,10 +110,9 @@
 补丁已在 Dockerfile 中配置，构建镜像时会自动应用：
 
 ```dockerfile
-COPY deployment/mem0/patches/fix-all-memory-bugs.patch /tmp/fix-all-memory-bugs.patch
-RUN cd /app && \
-    (MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.dirname(mem0.memory.main.__file__))") && \
-     patch -p1 -d "$MEM0_PATH" < /tmp/fix-all-memory-bugs.patch || (echo "ERROR: Fix all memory bugs patch failed!" && exit 1))
+COPY deployment/mem0/patches/apply_memory_fixes.py /tmp/apply_memory_fixes.py
+RUN MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.dirname(mem0.memory.main.__file__))") && \
+    python3 /tmp/apply_memory_fixes.py "$MEM0_PATH/main.py"
 ```
 
 ## 测试验证
@@ -131,13 +138,28 @@ RUN cd /app && \
 
 ## 相关文件
 
-- 补丁文件：`deployment/mem0/patches/fix-all-memory-bugs.patch`
+- 补丁脚本：`deployment/mem0/patches/apply_memory_fixes.py`
 - Dockerfile：`deployment/mem0/Dockerfile`
 - Mem0 源代码：`projects/mem0/mem0/memory/main.py`（不要直接修改）
+
+## 本地测试
+
+```bash
+cd /path/to/CozyMem0
+
+# 创建测试副本
+cp projects/mem0/mem0/memory/main.py /tmp/main_test.py
+
+# 应用补丁
+python3 deployment/mem0/patches/apply_memory_fixes.py /tmp/main_test.py
+
+# 验证语法
+python3 -m py_compile /tmp/main_test.py
+```
 
 ## 注意事项
 
 1. **不要直接修改源代码**：所有修改都通过补丁实现
-2. **补丁应用顺序**：补丁按顺序应用，确保依赖关系正确
+2. **使用 Python 脚本**：比 diff 格式更可靠
 3. **测试验证**：应用补丁后需要重新构建镜像并测试
 4. **向后兼容**：所有修复都保持向后兼容，不会破坏现有功能

@@ -1,75 +1,87 @@
-# Mem0 API Patches
+# Mem0 补丁
 
-这个目录包含对 Mem0 API 的补丁文件，用于在不修改 `projects/mem0` 目录的情况下应用自定义修改。
+这个目录包含对 Mem0 的补丁，用于在不修改 `projects/mem0` 目录的情况下应用自定义修改。
 
-## 补丁列表
+## 补丁方式
 
-### cors.patch
-添加 CORS 支持，允许前端从不同源访问 API。
+**使用 Python 脚本替代 diff 补丁**，因为更可靠、更易维护。
 
-**修改内容**：
-- 导入 `CORSMiddleware`
-- 添加 CORS 配置，支持通过环境变量 `CORS_ORIGINS` 配置允许的源
+## 主要补丁脚本
 
-**应用方式**：
-在 Dockerfile 构建时自动应用。
+### 1. apply_server_fixes.py
 
-## 如何创建新补丁
+修改 `server/main.py`，包含 7 个修复：
 
-1. **修改源文件**（临时）：
-   ```bash
-   # 在 projects/mem0/server/main.py 中做修改
-   ```
+| 修复 | 说明 |
+|------|------|
+| Fix 1 | 添加 APIRouter 和 CORSMiddleware 导入 |
+| Fix 2 | 替换 Postgres 配置为 Qdrant 配置 |
+| Fix 3 | 添加 OPENAI_MODEL 和 CUSTOM_FACT_EXTRACTION_PROMPT |
+| Fix 4 | 替换 pgvector 为 qdrant |
+| Fix 5 | 添加 CORS 中间件和 API router |
+| Fix 6 | 替换 @app 装饰器为 @api_router |
+| Fix 7 | 添加路由器注册 |
 
-2. **生成补丁**：
-   ```bash
-   cd projects/mem0/server
-   # 创建原始文件的备份
-   cp main.py main.py.orig
-   
-   # 做修改...
-   
-   # 生成补丁
-   diff -u main.py.orig main.py > ../../../deployment/mem0/patches/your-patch.patch
-   ```
+### 2. apply_memory_fixes.py
 
-3. **恢复源文件**：
-   ```bash
-   # 恢复原始文件
-   mv main.py.orig main.py
-   # 或者从 Git 恢复
-   git checkout projects/mem0/server/main.py
-   ```
+修复 `mem0/memory/main.py` 中的 bugs，包含 15 个修复：
 
-4. **更新 Dockerfile**：
-   在 Dockerfile 中添加应用补丁的步骤：
-   ```dockerfile
-   COPY deployment/mem0/patches/your-patch.patch /tmp/your-patch.patch
-   RUN cd /app && patch -p0 < /tmp/your-patch.patch || (echo "Warning: Patch failed" && true)
-   ```
+| 修复 | 说明 |
+|------|------|
+| Fix 0 | 确保 custom_fact_extraction_prompt 包含 "json" 关键字 |
+| Fix 1-2 | JSON 解析安全访问 `.get("facts", [])` |
+| Fix 3-4 | 同步版本 temp_uuid_mapping 安全访问 |
+| Fix 5 | 同步版本 vector_store.get None 检查 |
+| Fix 6-7 | 异步版本 temp_uuid_mapping 安全访问 |
+| Fix 8 | 异步版本 vector_store.get None 检查 |
+| Fix 9-13 | payload 安全访问 `.get()` |
 
-## 补丁格式说明
+## Dockerfile 使用
 
-补丁文件使用标准的 unified diff 格式：
-- `--- a/main.py`：原始文件
-- `+++ b/main.py`：修改后的文件
-- `@@ -行号,行数 +行号,行数 @@`：修改位置
-- `-`：删除的行
-- `+`：添加的行
-- 没有前缀：未修改的行（上下文）
+```dockerfile
+COPY deployment/mem0/patches/apply_server_fixes.py /tmp/apply_server_fixes.py
+COPY deployment/mem0/patches/apply_memory_fixes.py /tmp/apply_memory_fixes.py
+RUN echo "Applying server fixes..." && \
+    python3 /tmp/apply_server_fixes.py /app/main.py && \
+    echo "Applying memory fixes..." && \
+    MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.dirname(mem0.memory.main.__file__))") && \
+    python3 /tmp/apply_memory_fixes.py "$MEM0_PATH/main.py" && \
+    echo "All fixes applied successfully!"
+```
+
+## 本地测试
+
+```bash
+cd /path/to/CozyMem0
+
+# 测试 server 补丁
+cp projects/mem0/server/main.py /tmp/test_server.py
+python3 deployment/mem0/patches/apply_server_fixes.py /tmp/test_server.py
+python3 -m py_compile /tmp/test_server.py
+
+# 测试 memory 补丁
+cp projects/mem0/mem0/memory/main.py /tmp/test_memory.py
+python3 deployment/mem0/patches/apply_memory_fixes.py /tmp/test_memory.py
+python3 -m py_compile /tmp/test_memory.py
+```
+
+## 其他补丁文件（备用/历史）
+
+这些是旧的 diff 格式补丁，已被 Python 脚本替代：
+
+| 文件 | 说明 | 状态 |
+|------|------|------|
+| all-in-one.patch | 合并所有 server 修改 | 已弃用，使用 apply_server_fixes.py |
+| cors.patch | CORS 支持 | 已合并 |
+| switch-to-qdrant.patch | 切换到 Qdrant | 已合并 |
+| qdrant-only.patch | 仅 Qdrant 配置 | 已合并 |
+| add-api-prefix.patch | 添加 API 前缀 | 已合并 |
+| chinese-language-support.patch | 中文语言支持 | 已合并 |
+| web-ui-api-prefix.patch | Web UI API 前缀 | 已合并 |
 
 ## 注意事项
 
-1. **不要直接修改 `projects/mem0` 目录**：这些是引用的外部项目，应该保持原始状态
-2. **补丁路径**：由于 Dockerfile 中复制了 `projects/mem0/server/` 到 `/app`，补丁文件中的路径应该是 `main.py`（不是 `projects/mem0/server/main.py`）
-3. **补丁失败处理**：Dockerfile 中使用 `|| true` 确保补丁失败不会中断构建，但会输出警告
-4. **测试补丁**：在应用补丁前，可以在本地测试：
-   ```bash
-   cd /path/to/projects/mem0/server
-   patch -p0 < /path/to/deployment/mem0/patches/cors.patch
-   ```
-
-## 当前补丁状态
-
-- ✅ `cors.patch`：已创建并配置，在 Dockerfile 中自动应用
-
+1. **不要直接修改 `projects/mem0` 目录**
+2. **Python 脚本比 diff 补丁更可靠**：模式匹配而非行号
+3. **测试补丁**：在提交前在本地测试
+4. **验证语法**：确保修改后的文件语法正确
