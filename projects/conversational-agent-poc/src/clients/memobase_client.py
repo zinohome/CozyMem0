@@ -29,16 +29,28 @@ class MemobaseClientWrapper:
             用户画像字典
         """
         try:
-            user = self.client.get_or_create_user(user_id)
-            profile = user.profile(
-                max_token_size=max_token_size,
-                prefer_topics=["basic_info", "interest", "work"]
-            )
-            return profile if profile else {}
+            # 尝试获取用户，如果不存在则返回空画像
+            try:
+                user = self.client.get_user(user_id, no_get=False)
+                profile = user.profile(
+                    max_token_size=max_token_size,
+                    prefer_topics=["basic_info", "interest", "work"]
+                )
+                return profile if profile else {}
+            except Exception as get_error:
+                # 用户不存在是正常情况，返回空画像
+                import logging
+                logger = logging.getLogger(__name__)
+                error_msg = str(get_error)
+                if "422" in error_msg or "Unprocessable Entity" in error_msg or "404" in error_msg:
+                    logger.debug(f"User {user_id} not found in Memobase (normal for new users)")
+                else:
+                    logger.warning(f"Error getting user {user_id}: {get_error}")
+                return {}
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Error getting user profile: {e}", exc_info=True)
+            logger.warning(f"Error getting user profile: {e}")
             return {}
     
     def extract_and_update_profile(
@@ -54,12 +66,42 @@ class MemobaseClientWrapper:
             messages: 对话消息列表
         """
         try:
-            user = self.client.get_or_create_user(user_id)
-            blob = ChatBlob(messages=messages)
-            user.insert(blob)
-            user.flush()
+            # 先尝试获取用户，如果不存在则创建
+            user = None
+            try:
+                user = self.client.get_user(user_id, no_get=False)
+            except Exception as get_error:
+                # 如果用户不存在（422 或其他错误），尝试创建用户
+                import logging
+                logger = logging.getLogger(__name__)
+                error_msg = str(get_error)
+                if "422" in error_msg or "Unprocessable Entity" in error_msg or "404" in error_msg:
+                    logger.info(f"User {user_id} not found, creating new user in Memobase")
+                    try:
+                        # 使用 add_user 创建用户
+                        self.client.add_user(id=user_id, data={})
+                        user = self.client.get_user(user_id, no_get=True)
+                    except Exception as create_error:
+                        logger.warning(f"Failed to create user {user_id} in Memobase: {create_error}")
+                        # 如果创建失败，使用 no_get=True 继续尝试
+                        user = self.client.get_user(user_id, no_get=True)
+                else:
+                    # 其他错误，使用 no_get=True 继续尝试
+                    logger.warning(f"Error getting user {user_id}: {get_error}")
+                    user = self.client.get_user(user_id, no_get=True)
+            
+            if user:
+                blob = ChatBlob(messages=messages)
+                user.insert(blob)
+                user.flush()
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Error updating user profile: {e}", exc_info=True)
+            # Memobase 可能暂时不可用或配置问题，记录警告但不影响主流程
+            error_msg = str(e)
+            if "422" in error_msg or "Unprocessable Entity" in error_msg:
+                logger.warning(f"Memobase operation failed for user {user_id}: {error_msg}")
+            else:
+                logger.warning(f"Error updating user profile in Memobase: {e}")
+            # 不抛出异常，允许系统继续运行
 

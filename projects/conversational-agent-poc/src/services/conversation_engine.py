@@ -64,19 +64,24 @@ class ConversationEngine:
         
         # 处理异常并记录详细信息
         if isinstance(user_profile, Exception):
-            logger.error(f"Failed to get user profile: {user_profile}", exc_info=user_profile)
+            logger.warning(f"Failed to get user profile (will use empty profile): {user_profile}")
             user_profile = {}
         else:
             logger.info(f"Retrieved user profile: {len(user_profile)} fields")
         
         if isinstance(session_memories, Exception):
-            logger.error(f"Failed to get session memories: {session_memories}", exc_info=session_memories)
+            logger.warning(f"Failed to get session memories (will use empty memories): {session_memories}")
             session_memories = []
         else:
             logger.info(f"Retrieved {len(session_memories)} session memories")
         
         if isinstance(knowledge_results, Exception):
-            logger.error(f"Failed to get knowledge: {knowledge_results}", exc_info=knowledge_results)
+            # 如果是数据集不存在的错误，给出友好提示
+            error_msg = str(knowledge_results)
+            if "DatasetNotFoundError" in error_msg or "No datasets found" in error_msg:
+                logger.warning(f"Dataset not found (will continue without knowledge): {error_msg}")
+            else:
+                logger.warning(f"Failed to get knowledge (will continue without knowledge): {error_msg}")
             knowledge_results = []
         else:
             logger.info(f"Retrieved {len(knowledge_results)} knowledge results")

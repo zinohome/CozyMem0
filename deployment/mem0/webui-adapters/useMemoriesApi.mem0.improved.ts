@@ -250,7 +250,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         // 使用搜索接口
         console.log('[Mem0 Adapter] Searching memories:', { query, user_id });
         response = await axios.post(
-          `${URL}/search`,
+          `${URL}/api/v1/search`,
           {
             query: query,
             user_id: user_id
@@ -260,7 +260,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         // 获取所有记忆
         console.log('[Mem0 Adapter] Fetching all memories:', { user_id });
         response = await axios.get(
-          `${URL}/memories`,
+          `${URL}/api/v1/memories`,
           {
             params: { user_id: user_id }
           }
@@ -307,7 +307,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     try {
       console.log('[Mem0 Adapter] Creating memory:', { text, user_id });
       const response = await axios.post(
-        `${URL}/memories`,
+        `${URL}/api/v1/memories`,
         {
           messages: [
             {
@@ -333,7 +333,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       // Mem0 API 只支持单个删除，需要循环删除
       await Promise.all(
         memory_ids.map(id => 
-          axios.delete(`${URL}/memories/${id}`)
+          axios.delete(`${URL}/api/v1/memories/${id}`)
         )
       );
       dispatch(setMemoriesSuccess(memories.filter((memory: Memory) => !memory_ids.includes(memory.id))));
@@ -351,7 +351,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     setError(null);
     try {
       console.log('[Mem0 Adapter] Fetching memory by ID:', memoryId);
-      const response = await axios.get(`${URL}/memories/${memoryId}`);
+      const response = await axios.get(`${URL}/api/v1/memories/${memoryId}`);
       
       const adapted = adaptMem0Response(response.data);
       if (adapted.length === 0) {
@@ -395,7 +395,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       }
 
       const response = await axios.post(
-        `${URL}/search`,
+        `${URL}/api/v1/search`,
         {
           query: currentMemory.memory.substring(0, 100),
           user_id: user_id
@@ -423,7 +423,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     try {
       console.log('[Mem0 Adapter] Updating memory:', { memoryId, content });
       // 注意：Mem0 API 的 update 方法接受的 data 格式需要确认
-      await axios.put(`${URL}/memories/${memoryId}`, {
+      await axios.put(`${URL}/api/v1/memories/${memoryId}`, {
         memory: content
       });
       setIsLoading(false);
@@ -445,7 +445,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       if (state === "deleted" || state === "archived") {
         await Promise.all(
           memoryIds.map(id => 
-            axios.delete(`${URL}/memories/${id}`)
+            axios.delete(`${URL}/api/v1/memories/${id}`)
           )
         );
         dispatch(setMemoriesSuccess(memories.filter((memory: Memory) => !memoryIds.includes(memory.id))));

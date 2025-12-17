@@ -29,7 +29,7 @@ export const useStats = (): UseMemoriesApiReturn => {
     setError(null);
     try {
       // 获取所有记忆来计算总数
-      const response = await axios.get(`${URL}/memories`, {
+      const response = await axios.get(`${URL}/api/v1/memories`, {
         params: { user_id: user_id }
       });
       

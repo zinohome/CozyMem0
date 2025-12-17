@@ -49,13 +49,14 @@ class Mem0ClientWrapper:
         try:
             # 并发获取当前会话记忆和跨会话记忆
             # mem0 服务器 API: POST /api/v1/search
+            # 注意：如果 agent_id 为空字符串，mem0 可能不会返回结果，所以使用 None
             current_memories_resp, cross_memories_resp = await asyncio.gather(
                 self.client.post(
                     "/api/v1/search",
                     json={
                         "query": query,
                         "user_id": user_id,
-                        "agent_id": session_id
+                        "agent_id": session_id if session_id else None
                     }
                 ),
                 self.client.post(
@@ -191,6 +192,18 @@ class Mem0ClientWrapper:
             
             response = await self.client.post("/api/v1/memories", json=payload)
             response.raise_for_status()
+            
+            # 记录保存结果（用于调试）
+            import logging
+            logger = logging.getLogger(__name__)
+            try:
+                result = response.json()
+                logger.info(f"Mem0 memory saved successfully for user {user_id}, session {session_id}")
+                # 检查返回结果中是否有错误
+                if isinstance(result, dict) and "error" in result:
+                    logger.warning(f"Mem0 returned error in response: {result.get('error')}")
+            except Exception as e:
+                logger.warning(f"Could not parse Mem0 response: {e}")
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)

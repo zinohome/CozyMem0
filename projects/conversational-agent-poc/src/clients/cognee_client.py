@@ -53,7 +53,12 @@ class CogneeClientWrapper:
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Error searching knowledge: {e}", exc_info=True)
+            # 数据集不存在是常见情况，使用 warning 而不是 error
+            error_msg = str(e)
+            if "DatasetNotFoundError" in error_msg or "No datasets found" in error_msg:
+                logger.warning(f"Dataset not found in Cognee: {dataset_names}. Error: {error_msg}")
+            else:
+                logger.error(f"Error searching knowledge: {e}", exc_info=True)
             return []
     
     async def close(self):

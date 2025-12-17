@@ -90,7 +90,7 @@ export const useConfig = (): UseConfigApiReturn => {
         vector_store: config.mem0.vector_store
       };
       
-      await axios.post(`${URL}/configure`, mem0Config);
+      await axios.post(`${URL}/api/v1/configure`, mem0Config);
       dispatch(setConfigSuccess(config));
       setIsLoading(false);
       return config;
@@ -159,7 +159,7 @@ export const useConfig = (): UseConfigApiReturn => {
         }
       };
       
-      await axios.post(`${URL}/configure`, currentConfig);
+      await axios.post(`${URL}/api/v1/configure`, currentConfig);
       dispatch(updateLLM(llmConfig));
       setIsLoading(false);
       return llmConfig;
@@ -192,7 +192,7 @@ export const useConfig = (): UseConfigApiReturn => {
         }
       };
       
-      await axios.post(`${URL}/configure`, currentConfig);
+      await axios.post(`${URL}/api/v1/configure`, currentConfig);
       dispatch(updateEmbedder(embedderConfig));
       setIsLoading(false);
       return embedderConfig;

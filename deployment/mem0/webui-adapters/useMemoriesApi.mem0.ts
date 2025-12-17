@@ -153,7 +153,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       if (query) {
         // 使用搜索接口
         const searchResponse = await axios.post<Mem0SearchResponse>(
-          `${URL}/search`,
+          `${URL}/api/v1/search`,
           {
             query: query,
             user_id: user_id
@@ -173,7 +173,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       } else {
         // 获取所有记忆
         const response = await axios.get<Mem0GetAllResponse>(
-          `${URL}/memories`,
+          `${URL}/api/v1/memories`,
           {
             params: { user_id: user_id }
           }
@@ -222,7 +222,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
   const createMemory = async (text: string): Promise<void> => {
     try {
-      await axios.post(`${URL}/memories`, {
+      await axios.post(`${URL}/api/v1/memories`, {
         messages: [
           {
             role: "user",
@@ -244,7 +244,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       // Mem0 API 只支持单个删除，需要循环删除
       await Promise.all(
         memory_ids.map(id => 
-          axios.delete(`${URL}/memories/${id}`)
+          axios.delete(`${URL}/api/v1/memories/${id}`)
         )
       );
       dispatch(setMemoriesSuccess(memories.filter((memory: Memory) => !memory_ids.includes(memory.id))));
@@ -264,7 +264,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     setError(null);
     try {
       const response = await axios.get<Mem0Memory>(
-        `${URL}/memories/${memoryId}`
+        `${URL}/api/v1/memories/${memoryId}`
       );
       setIsLoading(false);
       dispatch(setSelectedMemory({
@@ -305,7 +305,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       }
 
       const response = await axios.post<Mem0SearchResponse>(
-        `${URL}/search`,
+        `${URL}/api/v1/search`,
         {
           query: currentMemory.memory.substring(0, 100), // 使用前100字符作为查询
           user_id: user_id
@@ -343,7 +343,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      await axios.put(`${URL}/memories/${memoryId}`, {
+      await axios.put(`${URL}/api/v1/memories/${memoryId}`, {
         memory: content
       });
       setIsLoading(false);
@@ -368,7 +368,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       if (state === "deleted" || state === "archived") {
         await Promise.all(
           memoryIds.map(id => 
-            axios.delete(`${URL}/memories/${id}`)
+            axios.delete(`${URL}/api/v1/memories/${id}`)
           )
         );
         dispatch(setMemoriesSuccess(memories.filter((memory: Memory) => !memoryIds.includes(memory.id))));
