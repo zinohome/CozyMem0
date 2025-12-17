@@ -1,18 +1,20 @@
 """Mem0 客户端封装"""
 import asyncio
 from typing import List, Dict, Any, Optional
-from mem0 import AsyncMemoryClient
+import httpx
 from ..config import settings
 
 
 class Mem0ClientWrapper:
-    """Mem0 客户端封装类"""
+    """Mem0 客户端封装类（直接调用本地 mem0 服务器 API）"""
     
     def __init__(self):
-        self.client = AsyncMemoryClient(
-            api_key=settings.mem0_api_key,
-            host=settings.mem0_api_url
-        ) if settings.mem0_api_key else None
+        # mem0 服务器使用 /api/v1 前缀（通过补丁添加）
+        self.base_url = settings.mem0_api_url.rstrip('/')
+        self.client = httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=30.0
+        ) if settings.mem0_api_url else None
     
     async def get_conversation_context(
         self,
@@ -36,50 +38,97 @@ class Mem0ClientWrapper:
         
         try:
             # 并发获取当前会话记忆和跨会话记忆
-            current_memories, cross_memories = await asyncio.gather(
-                self.client.search(
-                    query=query,
-                    user_id=user_id,
-                    agent_id=session_id,
-                    limit=10
+            # mem0 服务器 API: POST /api/v1/search
+            current_memories_resp, cross_memories_resp = await asyncio.gather(
+                self.client.post(
+                    "/api/v1/search",
+                    json={
+                        "query": query,
+                        "user_id": user_id,
+                        "agent_id": session_id
+                    }
                 ),
-                self.client.search(
-                    query=query,
-                    user_id=user_id,
-                    limit=5
+                self.client.post(
+                    "/api/v1/search",
+                    json={
+                        "query": query,
+                        "user_id": user_id
+                    }
                 ),
                 return_exceptions=True
             )
             
             memories = []
             
-            if not isinstance(current_memories, Exception):
-                memories.extend([
-                    {
-                        "content": result.memory,
-                        "type": result.memory_type,
+            # 处理当前会话记忆
+            if not isinstance(current_memories_resp, Exception):
+                current_memories_resp.raise_for_status()
+                current_data = current_memories_resp.json()
+                # mem0 返回的格式：直接是列表，每个元素包含 memory 字段
+                if isinstance(current_data, list):
+                    for item in current_data[:10]:
+                        memories.append({
+                            "content": item.get("memory", item.get("content", str(item))),
+                            "type": item.get("memory_type", item.get("type", "semantic")),
+                            "session": "current",
+                            "timestamp": item.get("created_at", item.get("timestamp"))
+                        })
+                elif isinstance(current_data, dict):
+                    # 如果是字典，可能是包装格式
+                    if "results" in current_data:
+                        for item in current_data["results"][:10]:
+                            memories.append({
+                                "content": item.get("memory", item.get("content", str(item))),
+                                "type": item.get("memory_type", item.get("type", "semantic")),
+                                "session": "current",
+                                "timestamp": item.get("created_at", item.get("timestamp"))
+                            })
+                    else:
+                        # 单个结果
+                        memories.append({
+                            "content": current_data.get("memory", current_data.get("content", str(current_data))),
+                            "type": current_data.get("memory_type", current_data.get("type", "semantic")),
                         "session": "current",
-                        "timestamp": str(result.created_at) if hasattr(result, 'created_at') else None
-                    }
-                    for result in current_memories
-                ])
+                            "timestamp": current_data.get("created_at", current_data.get("timestamp"))
+                        })
             
-            if not isinstance(cross_memories, Exception):
-                memories.extend([
-                    {
-                        "content": result.memory,
-                        "type": result.memory_type,
+            # 处理跨会话记忆
+            if not isinstance(cross_memories_resp, Exception):
+                cross_memories_resp.raise_for_status()
+                cross_data = cross_memories_resp.json()
+                if isinstance(cross_data, list):
+                    for item in cross_data[:5]:
+                        memories.append({
+                            "content": item.get("memory", item.get("content", str(item))),
+                            "type": item.get("memory_type", item.get("type", "semantic")),
+                            "session": "cross",
+                            "timestamp": item.get("created_at", item.get("timestamp"))
+                        })
+                elif isinstance(cross_data, dict):
+                    if "results" in cross_data:
+                        for item in cross_data["results"][:5]:
+                            memories.append({
+                                "content": item.get("memory", item.get("content", str(item))),
+                                "type": item.get("memory_type", item.get("type", "semantic")),
+                                "session": "cross",
+                                "timestamp": item.get("created_at", item.get("timestamp"))
+                            })
+                    else:
+                        # 单个结果
+                        memories.append({
+                            "content": cross_data.get("memory", cross_data.get("content", str(cross_data))),
+                            "type": cross_data.get("memory_type", cross_data.get("type", "semantic")),
                         "session": "cross",
-                        "timestamp": str(result.created_at) if hasattr(result, 'created_at') else None
-                    }
-                    for result in cross_memories
-                ])
+                            "timestamp": cross_data.get("created_at", cross_data.get("timestamp"))
+                        })
             
             # 按时间排序
-            memories.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            memories.sort(key=lambda x: x.get("timestamp", "") or "", reverse=True)
             return memories[:15]
         except Exception as e:
             print(f"Error getting conversation context: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     async def save_conversation(
@@ -102,17 +151,43 @@ class Mem0ClientWrapper:
             return
         
         try:
-            await self.client.add(
-                messages=messages,
-                user_id=user_id,
-                agent_id=session_id,
-                metadata=metadata
-            )
+            # mem0 服务器 API: POST /api/v1/memories
+            # 消息格式需要转换为 mem0 期望的格式
+            mem0_messages = []
+            for msg in messages:
+                if isinstance(msg, dict):
+                    # 如果已经是 {"role": "user", "content": "..."} 格式，直接使用
+                    if "role" in msg and "content" in msg:
+                        mem0_messages.append(msg)
+                    # 如果是其他格式，尝试转换
+                    elif "message" in msg:
+                        mem0_messages.append({
+                            "role": msg.get("role", "user"),
+                            "content": msg["message"]
+                        })
+                    elif "text" in msg:
+                        mem0_messages.append({
+                            "role": msg.get("role", "user"),
+                            "content": msg["text"]
+                        })
+            
+            payload = {
+                "messages": mem0_messages,
+                "user_id": user_id,
+                "agent_id": session_id
+            }
+            if metadata:
+                payload["metadata"] = metadata
+            
+            response = await self.client.post("/api/v1/memories", json=payload)
+            response.raise_for_status()
         except Exception as e:
             print(f"Error saving conversation: {e}")
+            import traceback
+            traceback.print_exc()
     
     async def close(self):
         """关闭客户端"""
         if self.client:
-            await self.client.close()
+            await self.client.aclose()
 

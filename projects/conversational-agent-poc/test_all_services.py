@@ -87,11 +87,11 @@ async def test_mem0():
     ok, status, text = await test_service_endpoint(f"{MEM0_URL}/docs")
     print(f"API文档: {'✅' if ok else '❌'} (状态码: {status})")
     
-    # 测试搜索接口
+    # 测试搜索接口（mem0 使用 /api/v1 前缀）
     ok, status, text = await test_service_endpoint(
-        f"{MEM0_URL}/api/v1/memories/search",
+        f"{MEM0_URL}/api/v1/search",
         method="POST",
-        json_data={"query": "test", "user_id": "test_user", "limit": 1}
+        json_data={"query": "test", "user_id": "test_user"}
     )
     print(f"搜索接口: {'✅' if ok else '❌'} (状态码: {status})")
 

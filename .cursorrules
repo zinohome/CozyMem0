@@ -565,6 +565,47 @@ project/
 - `docs/README.md` 作为文档导航中心
 - 使用相对路径进行文档间链接
 
+## 🚫 源代码修改规则（强制要求）
+
+### 禁止修改原项目源代码
+- **绝对禁止直接修改 `projects/mem0/` 目录下的任何源代码文件**
+- `projects/mem0/` 目录包含的是 mem0 官方源代码，必须保持原样
+- 任何对 mem0 源代码的修改都应该通过 Docker 构建时的补丁机制实现
+
+### 补丁机制
+如果需要修改 mem0 源代码，必须使用以下方式：
+
+1. **在 Docker 构建时打补丁**
+   - 补丁文件应放在 `deployment/mem0/patches/` 目录下
+   - 在 Dockerfile 中使用补丁脚本应用补丁
+   - 参考现有补丁示例：`deployment/mem0/patches/add-api-prefix.patch`
+
+2. **补丁文件命名规范**
+   - 补丁文件应清晰描述修改内容
+   - 例如：`add-api-prefix.patch`, `fix-cors.patch`
+
+3. **补丁脚本要求**
+   - 补丁脚本应该是幂等的（可以安全地多次运行）
+   - 补丁脚本应该包含回滚机制（如果可能）
+   - 补丁脚本应该记录修改内容
+
+### 允许修改的目录
+- ✅ `deployment/` - 部署配置和 Docker 相关文件
+- ✅ `docs/` - 文档文件
+- ✅ `projects/conversational-agent-poc/` - POC 项目代码
+- ✅ `deployment/mem0/patches/` - 补丁文件
+
+### 禁止修改的目录
+- ❌ `projects/mem0/` - Mem0 官方源代码
+- ❌ `projects/mem0/` 下的任何其他官方源代码目录
+
+### 检查清单
+修改代码前，请确认：
+- [ ] 是否在修改 `projects/mem0/` 目录下的文件？
+- [ ] 如果是，是否应该使用补丁机制？
+- [ ] 补丁文件是否放在正确的位置？
+- [ ] 补丁脚本是否在 Dockerfile 中正确应用？
+
 ## ⚠️ 重要提醒
 
 **所有文档必须放在 `docs/` 目录下并按子目录整理！**
@@ -572,6 +613,8 @@ project/
 **所有实验必须记录在 `docs/research/experiments/` 目录下！**
 
 **所有代码必须遵循 Python 最佳实践！**
+
+**绝对禁止直接修改 `projects/mem0/` 目录下的官方源代码！**
 
 违反此规则的文件将被视为不符合项目规范，需要在代码审查时修正。
 

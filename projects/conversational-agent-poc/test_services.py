@@ -87,13 +87,12 @@ async def test_mem0_api() -> bool:
     print("\n=== 测试 Mem0 API ===")
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            # 测试搜索接口
+            # 测试搜索接口（mem0 使用 /api/v1 前缀）
             response = await client.post(
-                f"{MEM0_URL}/api/v1/memories/search",
+                f"{MEM0_URL}/api/v1/search",
                 json={
                     "query": "test",
-                    "user_id": "test_user",
-                    "limit": 1
+                    "user_id": "test_user"
                 }
             )
             if response.status_code in [200, 404, 422]:
