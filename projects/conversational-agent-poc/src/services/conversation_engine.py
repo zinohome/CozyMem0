@@ -112,7 +112,8 @@ class ConversationEngine:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=800  # 🚀 限制回复长度，加快生成
+                max_tokens=500  # 🚀 进一步限制回复长度（800→500），显著加快生成
+                # 心理咨询回复不需要太长，2-4段话即可
             )
             ai_response = response.choices[0].message.content
             llm_time = time.time() - llm_start
@@ -146,8 +147,8 @@ class ConversationEngine:
             "session_memories_status": f"已加载 {len(session_memories)} 条记忆" if session_memories else "暂无（首次对话或新会话）",
             "knowledge_count": len(knowledge_results),
             "knowledge_status": f"已检索到 {len(knowledge_results)} 条知识" if knowledge_results else "暂无（未指定知识库或知识库为空）",
-            "session_memories": session_memories[:5] if session_memories else [],  # 只返回前5条
-            "knowledge": knowledge_results[:3] if knowledge_results else [],  # 只返回前3条
+            "session_memories": session_memories[:3] if session_memories else [],  # 🚀 减少到3条（之前5条）
+            "knowledge": knowledge_results[:2] if knowledge_results else [],  # 🚀 减少到2条（之前3条）
         }
         
         # 添加调试信息（仅在有错误时）

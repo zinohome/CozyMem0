@@ -18,7 +18,7 @@ POC_URL = "http://localhost:8080"
 # ========================================
 
 # 【对照组】基础 LLM - 不使用任何记忆系统
-USER_ID = "xiaowan_baseline"
+# USER_ID = "xiaowan_baseline"
 # DATASET_NAMES = []  # ❌ 不使用知识库
 
 # 【仅知识库组】LLM + kb_psyc
@@ -26,7 +26,7 @@ USER_ID = "xiaowan_baseline"
 # DATASET_NAMES = ["kb_psyc"]  # ✅ 使用知识库
 
 # 【完整系统组】LLM + kb_psyc + Memobase + Mem0（推荐）
-#USER_ID = "xiaowan_full"
+USER_ID = "xiaowan_full"
 DATASET_NAMES = ["kb_psyc"]  # ✅ 使用知识库
 
 SESSION_ID = f"manual_session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"

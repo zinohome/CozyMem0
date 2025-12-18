@@ -39,7 +39,7 @@ def build_conversation_prompt(
     # 相关记忆
     if session_memories:
         prompt_parts.append("# 对话记忆")
-        for memory in session_memories[:10]:  # 最多10条
+        for memory in session_memories[:5]:  # 🚀 减少到5条（之前10条）
             content = memory.get("content", "")
             session_type = memory.get("session", "unknown")
             memory_type = memory.get("type", "semantic")
@@ -49,10 +49,16 @@ def build_conversation_prompt(
     # 专业知识
     if knowledge:
         prompt_parts.append("# 专业知识")
-        for item in knowledge[:5]:  # 最多5条
+        for item in knowledge[:2]:  # 🚀 减少到2条（之前5条）
             content = item.get("content", "")
             source = item.get("source", "unknown")
             score = item.get("score", 0.0)
+            # 🚀 确保 score 不为 None
+            if score is None:
+                score = 0.0
+            # 🚀 限制每条知识的长度，避免过长的文本
+            if len(content) > 500:
+                content = content[:500] + "..."
             prompt_parts.append(f"- [{source}] (相关度: {score:.2f}) {content}")
         prompt_parts.append("")
     
