@@ -82,6 +82,7 @@ class MessageRequest(BaseModel):
     user_id: str
     session_id: str
     dataset_names: Optional[List[str]] = None
+    role: str = "default"  # 角色：default 或 psychology_counselor
 
 
 class TestRequest(BaseModel):
@@ -90,6 +91,7 @@ class TestRequest(BaseModel):
     session_id: Optional[str] = None
     message: str
     dataset_names: Optional[List[str]] = None
+    role: str = "default"  # 角色：default 或 psychology_counselor
 
 
 # API 端点
@@ -129,7 +131,8 @@ async def send_message(
             user_id=request.user_id,
             session_id=session_id,
             message=request.message,
-            dataset_names=request.dataset_names
+            dataset_names=request.dataset_names,
+            role=request.role
         )
         
         return JSONResponse(content={
@@ -161,7 +164,8 @@ async def test_conversation(request: TestRequest):
             user_id=request.user_id,
             session_id=session_id,
             message=request.message,
-            dataset_names=request.dataset_names
+            dataset_names=request.dataset_names,
+            role=request.role
         )
         
         return JSONResponse(content={
@@ -171,7 +175,8 @@ async def test_conversation(request: TestRequest):
             "message": request.message,
             "response": result["response"],
             "context": result["context"],
-            "dataset_names": request.dataset_names
+            "dataset_names": request.dataset_names,
+            "role": request.role
         })
     except Exception as e:
         logger.error(f"Error in test conversation: {e}", exc_info=True)

@@ -51,29 +51,93 @@ class MemobaseClientWrapper:
         uuid_user_id = user_id_to_uuid(user_id)
         
         try:
-            # 尝试获取用户，如果不存在则返回空画像
+            # 尝试获取用户
+            user = self.client.get_user(uuid_user_id, no_get=False)
+            
+            # 尝试使用 need_json=True 获取JSON格式的画像
             try:
-                user = self.client.get_user(uuid_user_id, no_get=False)
+                profile = user.profile(
+                    need_json=True,
+                    max_token_size=max_token_size,
+                    prefer_topics=["basic_info", "interest", "work"]
+                )
+                # need_json=True 应该返回字典，但需要处理UUID等不可序列化类型
+                if profile:
+                    return self._serialize_profile(profile)
+                return {}
+            except (TypeError, AttributeError):
+                # 如果 need_json 不支持，尝试普通方式并转换
                 profile = user.profile(
                     max_token_size=max_token_size,
                     prefer_topics=["basic_info", "interest", "work"]
                 )
-                return profile if profile else {}
-            except Exception as get_error:
-                # 用户不存在是正常情况，返回空画像
-                import logging
-                logger = logging.getLogger(__name__)
-                error_msg = str(get_error)
-                if "422" in error_msg or "Unprocessable Entity" in error_msg or "404" in error_msg:
-                    logger.debug(f"User {user_id} (UUID: {uuid_user_id}) not found in Memobase (normal for new users)")
-                else:
-                    logger.warning(f"Error getting user {user_id} (UUID: {uuid_user_id}): {get_error}")
+                if profile:
+                    return self._serialize_profile(profile)
                 return {}
         except Exception as e:
+            # 用户不存在或其他错误，返回空画像
             import logging
             logger = logging.getLogger(__name__)
-            logger.warning(f"Error getting user profile: {e}")
+            error_msg = str(e)
+            if "422" in error_msg or "Unprocessable Entity" in error_msg or "404" in error_msg:
+                logger.debug(f"User {user_id} (UUID: {uuid_user_id}) not found in Memobase (normal for new users)")
+            else:
+                logger.warning(f"Error getting user profile for {user_id} (UUID: {uuid_user_id}): {e}")
             return {}
+    
+    def _serialize_profile(self, profile: Any) -> Dict[str, Any]:
+        """
+        序列化profile对象为字典，处理UUID等不可序列化类型
+        
+        Args:
+            profile: profile对象或字典
+        
+        Returns:
+            可序列化的字典
+        """
+        import uuid
+        from datetime import datetime
+        
+        if isinstance(profile, dict):
+            result = {}
+            for key, value in profile.items():
+                result[key] = self._serialize_value(value)
+            return result
+        elif hasattr(profile, 'dict'):
+            return self._serialize_profile(profile.dict())
+        elif hasattr(profile, 'model_dump'):
+            return self._serialize_profile(profile.model_dump())
+        else:
+            # 如果无法转换，尝试转换为字符串
+            return {"raw": str(profile)}
+    
+    def _serialize_value(self, value: Any) -> Any:
+        """
+        序列化单个值，处理UUID、datetime等类型
+        
+        Args:
+            value: 要序列化的值
+        
+        Returns:
+            可序列化的值
+        """
+        import uuid
+        from datetime import datetime
+        
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        elif isinstance(value, datetime):
+            return value.isoformat()
+        elif isinstance(value, dict):
+            return {k: self._serialize_value(v) for k, v in value.items()}
+        elif isinstance(value, (list, tuple)):
+            return [self._serialize_value(item) for item in value]
+        elif hasattr(value, 'dict'):
+            return self._serialize_value(value.dict())
+        elif hasattr(value, 'model_dump'):
+            return self._serialize_value(value.model_dump())
+        else:
+            return value
     
     def extract_and_update_profile(
         self,

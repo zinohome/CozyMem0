@@ -214,14 +214,67 @@ async def test_memobase_apis(tester: APITester):
     print_colored("2. 测试 Memobase API", "cyan")
     print_colored("==========================================", "cyan")
     
-    # Memobase API 端点需要根据实际API文档调整
-    # 这里测试健康检查（如果支持）
+    import uuid
+    test_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, TEST_USER_ID))
+    
+    # 准备请求头（如果需要API key）
+    headers = {}
+    try:
+        from src.config import settings
+        if hasattr(settings, 'memobase_api_key') and settings.memobase_api_key:
+            headers["Authorization"] = f"Bearer {settings.memobase_api_key}"
+    except:
+        pass
+    
+    # 2.1 健康检查
     await tester.test_endpoint(
         name="Memobase Health Check",
         method="GET",
-        url=f"{MEMOBASE_PROJECT_URL}/health",
-        description="Memobase服务健康检查（如果支持）"
+        url=f"{MEMOBASE_PROJECT_URL}/api/v1/healthcheck",
+        description="Memobase服务健康检查"
     )
+    
+    # 2.2 获取用户（可能不存在）
+    await tester.test_endpoint(
+        name="Memobase Get User (Before Create)",
+        method="GET",
+        url=f"{MEMOBASE_PROJECT_URL}/api/v1/users/{test_uuid}",
+        description=f"获取用户信息（UUID: {test_uuid}，可能不存在）",
+        headers=headers if headers else None
+    )
+    
+    # 2.3 创建用户
+    await tester.test_endpoint(
+        name="Memobase Create User",
+        method="POST",
+        url=f"{MEMOBASE_PROJECT_URL}/api/v1/users",
+        description=f"创建新用户（UUID: {test_uuid}）",
+        data={"id": test_uuid, "data": {}},
+        headers=headers if headers else None
+    )
+    
+    # 2.4 再次获取用户（验证创建）
+    await tester.test_endpoint(
+        name="Memobase Get User (After Create)",
+        method="GET",
+        url=f"{MEMOBASE_PROJECT_URL}/api/v1/users/{test_uuid}",
+        description="获取用户信息（验证创建是否成功）",
+        headers=headers if headers else None
+    )
+    
+    # 2.5 再次获取用户信息（查看完整信息）
+    await tester.test_endpoint(
+        name="Memobase Get User (Final)",
+        method="GET",
+        url=f"{MEMOBASE_PROJECT_URL}/api/v1/users/{test_uuid}",
+        description="获取用户信息（最终状态）",
+        headers=headers if headers else None
+    )
+    
+    # 注意：Memobase的其他功能（如profile、blobs、flush）主要通过Python SDK使用
+    # 这些功能在POC项目中通过SDK正常使用，但REST API端点可能不直接暴露
+    print_colored("\n注意: Memobase的用户画像、对话数据插入等功能主要通过Python SDK使用", "yellow")
+    print_colored("这些功能在POC项目中通过SDK正常使用，但REST API端点可能不直接暴露", "yellow")
 
 
 async def test_mem0_apis(tester: APITester):

@@ -32,7 +32,8 @@ class ConversationEngine:
         user_id: str,
         session_id: str,
         message: str,
-        dataset_names: Optional[List[str]] = None
+        dataset_names: Optional[List[str]] = None,
+        role: str = "default"
     ) -> Dict[str, Any]:
         """
         处理用户消息，生成响应
@@ -46,9 +47,13 @@ class ConversationEngine:
         Returns:
             包含响应和上下文的字典
         """
-        # 步骤 1-3：并发获取上下文
+        # 步骤 1-3：并发获取上下文（🚀 已优化性能）
+        import time
+        start_time = time.time()
+        retrieval_start = time.time()
+        
         user_profile, session_memories, knowledge_results = await asyncio.gather(
-            self.profile_service.get_user_profile(user_id=user_id, max_token_size=500),
+            self.profile_service.get_user_profile(user_id=user_id, max_token_size=300),  # 🚀 减少token
             self.memory_service.get_conversation_context(
                 user_id=user_id,
                 session_id=session_id,
@@ -57,10 +62,13 @@ class ConversationEngine:
             self.knowledge_service.search_knowledge(
                 query=message,
                 dataset_names=dataset_names or [],
-                top_k=5
+                top_k=2  # 🚀 从5减少到2，显著加快检索速度
             ),
             return_exceptions=True
         )
+        
+        retrieval_time = time.time() - retrieval_start
+        logger.info(f"⚡ 并行检索耗时: {retrieval_time:.2f}秒")
         
         # 处理异常并记录详细信息
         if isinstance(user_profile, Exception):
@@ -95,19 +103,24 @@ class ConversationEngine:
         )
         
         # 步骤 5：调用 OpenAI API
+        llm_start = time.time()
         try:
             response = await self.openai.chat.completions.create(
                 model=settings.openai_model,
                 messages=[
-                    {"role": "system", "content": get_system_prompt()},
+                    {"role": "system", "content": get_system_prompt(role)},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7
+                temperature=0.7,
+                max_tokens=800  # 🚀 限制回复长度，加快生成
             )
             ai_response = response.choices[0].message.content
+            llm_time = time.time() - llm_start
+            logger.info(f"⚡ LLM生成耗时: {llm_time:.2f}秒")
         except Exception as e:
             logger.error(f"OpenAI API error: {e}")
             ai_response = "抱歉，我遇到了一些问题，请稍后再试。"
+            llm_time = time.time() - llm_start
         
         # 步骤 6-7：异步保存（不阻塞响应）
         asyncio.create_task(
@@ -120,21 +133,34 @@ class ConversationEngine:
             )
         )
         
+        # 总耗时
+        total_time = time.time() - start_time
+        logger.info(f"🎯 对话总耗时: {total_time:.2f}秒 (检索: {retrieval_time:.2f}s + LLM: {llm_time:.2f}s)")
+        
         # 返回响应和上下文信息（用于测试和调试）
+        # 确保即使数据为空也返回有意义的信息
+        context = {
+            "user_profile": user_profile if user_profile else {},
+            "user_profile_status": "已加载" if user_profile else "暂无（首次对话或新用户）",
+            "session_memories_count": len(session_memories),
+            "session_memories_status": f"已加载 {len(session_memories)} 条记忆" if session_memories else "暂无（首次对话或新会话）",
+            "knowledge_count": len(knowledge_results),
+            "knowledge_status": f"已检索到 {len(knowledge_results)} 条知识" if knowledge_results else "暂无（未指定知识库或知识库为空）",
+            "session_memories": session_memories[:5] if session_memories else [],  # 只返回前5条
+            "knowledge": knowledge_results[:3] if knowledge_results else [],  # 只返回前3条
+        }
+        
+        # 添加调试信息（仅在有错误时）
+        if any(isinstance(x, Exception) for x in [user_profile, session_memories, knowledge_results]):
+            context["debug"] = {
+                "profile_error": str(user_profile) if isinstance(user_profile, Exception) else None,
+                "memories_error": str(session_memories) if isinstance(session_memories, Exception) else None,
+                "knowledge_error": str(knowledge_results) if isinstance(knowledge_results, Exception) else None
+            }
+        
         return {
             "response": ai_response,
-            "context": {
-                "user_profile": user_profile,
-                "session_memories_count": len(session_memories),
-                "knowledge_count": len(knowledge_results),
-                "session_memories": session_memories[:5],  # 只返回前5条
-                "knowledge": knowledge_results[:3],  # 只返回前3条
-                "debug": {
-                    "profile_error": str(user_profile) if isinstance(user_profile, Exception) else None,
-                    "memories_error": str(session_memories) if isinstance(session_memories, Exception) else None,
-                    "knowledge_error": str(knowledge_results) if isinstance(knowledge_results, Exception) else None
-                } if any(isinstance(x, Exception) for x in [user_profile, session_memories, knowledge_results]) else None
-            }
+            "context": context
         }
     
     async def _save_conversation_async(

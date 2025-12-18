@@ -1,0 +1,155 @@
+{
+  "session_info": {
+    "session_id": 1,
+    "session_name": "初次咨询 - 建立信任关系",
+    "theme": "学业压力和焦虑情绪",
+    "objectives": [
+      "建立安全的咨询关系",
+      "了解来访者的基本情况",
+      "识别主要困扰",
+      "提供初步支持和希望"
+    ]
+  },
+  "user_profile": {
+    "name": "江小婉",
+    "age": 15,
+    "gender": "女",
+    "school": "北京市某重点中学",
+    "grade": "高一",
+    "personality": "软弱、内向",
+    "main_challenges": "学习压力大，与家人和同学沟通困难"
+  },
+  "conversation": [
+    {
+      "round": 1,
+      "topic": "开场问候",
+      "user_message": "你好...老师让我来找你聊聊，我是江小婉，高一的",
+      "user_emotion": "紧张、不安",
+      "expected_counselor_approach": [
+        "温暖欢迎",
+        "建立安全感",
+        "表达关心"
+      ]
+    },
+    {
+      "round": 2,
+      "topic": "了解来访原因",
+      "user_message": "最近...学习压力特别大，总是睡不好觉，感觉很累",
+      "user_emotion": "疲惫、焦虑",
+      "expected_counselor_approach": [
+        "共情回应",
+        "探索具体情况",
+        "正常化感受"
+      ]
+    },
+    {
+      "round": 3,
+      "topic": "深入了解压力来源",
+      "user_message": "主要是数学和物理成绩不好...我很努力了，但还是考不好，每次考试排名都往后掉",
+      "user_emotion": "挫败、无力",
+      "expected_counselor_approach": [
+        "理解困难",
+        "探索努力的方式",
+        "避免批评和说教"
+      ]
+    },
+    {
+      "round": 4,
+      "topic": "探索情绪反应",
+      "user_message": "每次考试前我都特别紧张，手心出汗，心跳很快，有时候脑子一片空白，明明会做的题都做不出来",
+      "user_emotion": "焦虑、恐惧",
+      "expected_counselor_approach": [
+        "识别考试焦虑",
+        "共情身体反应",
+        "正常化紧张情绪"
+      ]
+    },
+    {
+      "round": 5,
+      "topic": "了解应对方式",
+      "user_message": "我...我就自己硬撑着，不敢跟父母说，说了他们会更失望的...我怕他们觉得我不够努力",
+      "user_emotion": "孤独、自责",
+      "expected_counselor_approach": [
+        "理解独自承受的辛苦",
+        "探索对父母反应的担心",
+        "肯定求助的勇气"
+      ]
+    },
+    {
+      "round": 6,
+      "topic": "家庭关系探索",
+      "user_message": "爸妈工作很忙，他们对我期望很高，总说我要考上好大学，不能给家里丢脸...他们为我付出这么多，我不能让他们失望",
+      "user_emotion": "压力、愧疚",
+      "expected_counselor_approach": [
+        "理解父母期望带来的压力",
+        "探索自己的想法",
+        "区分父母期望和自己目标"
+      ]
+    },
+    {
+      "round": 7,
+      "topic": "社交关系探索",
+      "user_message": "班上...我没什么朋友，大家都很优秀，学习都好，我感觉跟不上他们，也不敢跟他们说话",
+      "user_emotion": "自卑、孤立",
+      "expected_counselor_approach": [
+        "共情孤独感",
+        "探索社交困难",
+        "避免比较"
+      ]
+    },
+    {
+      "round": 8,
+      "topic": "自我认知探索",
+      "user_message": "我觉得自己很笨，什么都做不好...别人轻松就能学会的，我要花好几倍时间，还是记不住",
+      "user_emotion": "自我否定、无助",
+      "expected_counselor_approach": [
+        "挑战负面自我评价",
+        "寻找反例",
+        "探索优势"
+      ]
+    },
+    {
+      "round": 9,
+      "topic": "优势和资源识别",
+      "user_message": "优点吗...我也不知道...可能...我还挺喜欢画画的，画画的时候会觉得轻松一些，忘掉烦恼",
+      "user_emotion": "犹豫、略显放松",
+      "expected_counselor_approach": [
+        "肯定兴趣和优势",
+        "探索画画的意义",
+        "连接资源和应对"
+      ]
+    },
+    {
+      "round": 10,
+      "topic": "总结和下次安排",
+      "user_message": "谢谢老师，和你聊完我感觉好多了...至少有人理解我了...我可以下次再来吗",
+      "user_emotion": "放松、希望",
+      "expected_counselor_approach": [
+        "肯定进步",
+        "表达愿意陪伴",
+        "建立咨询关系",
+        "布置简单作业（如记录情绪）"
+      ]
+    }
+  ],
+  "session_summary": {
+    "key_findings": [
+      "主诉：学业压力大、考试焦虑、睡眠困难",
+      "核心困扰：完美主义倾向、害怕让父母失望",
+      "社交问题：缺少朋友支持、感到孤立",
+      "情绪状态：焦虑、自责、自我价值感低",
+      "积极资源：绘画爱好、求助意愿"
+    ],
+    "counseling_progress": [
+      "✓ 建立了初步信任关系",
+      "✓ 识别了主要问题领域",
+      "✓ 发现了积极资源（画画）",
+      "✓ 来访者愿意继续咨询"
+    ],
+    "next_session_focus": [
+      "深入探索完美主义和自我价值",
+      "处理考试焦虑和应对策略",
+      "情绪管理技巧教授"
+    ]
+  }
+}

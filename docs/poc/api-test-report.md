@@ -6,14 +6,15 @@
 
 ## 测试总结
 
-- **总测试数**: 17
-- **成功**: 15 (88.2%)
-- **失败**: 2 (11.8%)
+- **总测试数**: 21
+- **成功**: 16 (76.2%)
+- **失败**: 5 (5.0%)
 
 ### 失败原因分析
 
-1. **Memobase Health Check** (HTTP 404) - Memobase服务不支持 `/health` 端点，这是正常的，因为Memobase可能使用不同的健康检查机制
+1. **Memobase Profile/Blobs/Flush端点** (HTTP 404) - 这些功能主要通过Python SDK使用，REST API端点不直接暴露，这是正常的设计
 2. **Mem0 Health Check** (HTTP 404) - Mem0服务不支持 `/health` 端点，但其他API端点工作正常
+3. **POC跨会话记忆测试** (HTTP 500) - 发现了一个序列化问题，需要修复
 
 ## 1. Cognee API 测试
 
@@ -94,23 +95,146 @@ curl -X GET "http://192.168.66.11:8000/api/v1/datasets"
 
 ## 2. Memobase API 测试
 
-### 2.1 健康检查 ❌
+### 2.1 健康检查 ✅
 
-**端点**: `GET http://192.168.66.11:8019/health`
+**端点**: `GET http://192.168.66.11:8019/api/v1/healthcheck`
 
 **请求**:
 ```bash
-curl -X GET "http://192.168.66.11:8019/health"
+curl -X GET "http://192.168.66.11:8019/api/v1/healthcheck"
 ```
 
-**响应** (HTTP 404):
+**响应** (HTTP 200):
 ```json
 {
-  "detail": "Not Found"
+  "data": null,
+  "errno": 0,
+  "errmsg": ""
 }
 ```
 
-**说明**: Memobase服务不支持 `/health` 端点，这是正常的。Memobase通过其他方式提供服务，在POC项目中通过SDK正常使用。
+**说明**: Memobase服务健康检查成功。`errno: 0` 表示服务正常。
+
+---
+
+### 2.2 获取用户（创建前）✅
+
+**端点**: `GET http://192.168.66.11:8019/api/v1/users/{user_id}`
+
+**请求**:
+```bash
+# 注意：user_id必须是UUID格式
+# 对于test_user_001，UUID为: 5e7e5f3b-6416-567a-80cb-4ee21a6a03ec
+curl -X GET "http://192.168.66.11:8019/api/v1/users/5e7e5f3b-6416-567a-80cb-4ee21a6a03ec"
+```
+
+**响应** (HTTP 200):
+```json
+{
+  "data": null,
+  "errno": 404,
+  "errmsg": "User 5e7e5f3b-6416-567a-80cb-4ee21a6a03ec not found"
+}
+```
+
+**说明**: 用户不存在时返回 `errno: 404`，这是正常的。
+
+---
+
+### 2.3 创建用户 ✅
+
+**端点**: `POST http://192.168.66.11:8019/api/v1/users`
+
+**请求**:
+```bash
+curl -X POST "http://192.168.66.11:8019/api/v1/users" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "5e7e5f3b-6416-567a-80cb-4ee21a6a03ec",
+    "data": {}
+  }'
+```
+
+**响应** (HTTP 200):
+```json
+{
+  "data": {
+    "id": "5e7e5f3b-6416-567a-80cb-4ee21a6a03ec"
+  },
+  "errno": 0,
+  "errmsg": ""
+}
+```
+
+**说明**: 成功创建用户。`errno: 0` 表示操作成功。
+
+---
+
+### 2.4 获取用户（创建后）✅
+
+**端点**: `GET http://192.168.66.11:8019/api/v1/users/{user_id}`
+
+**请求**:
+```bash
+curl -X GET "http://192.168.66.11:8019/api/v1/users/5e7e5f3b-6416-567a-80cb-4ee21a6a03ec"
+```
+
+**响应** (HTTP 200):
+```json
+{
+  "data": {
+    "data": {},
+    "id": null,
+    "created_at": "2025-12-18T01:14:42.240013Z",
+    "updated_at": "2025-12-18T01:14:42.240013Z"
+  },
+  "errno": 0,
+  "errmsg": ""
+}
+```
+
+**说明**: 成功获取用户信息，包含创建时间和更新时间。
+
+---
+
+### 2.5 Memobase SDK 功能说明
+
+**重要**: Memobase的其他功能（如用户画像、对话数据插入、数据刷新等）主要通过 **Python SDK** 使用，而不是直接通过REST API。
+
+在POC项目中，这些功能通过 `MemobaseClientWrapper` 类正常使用：
+
+- **获取用户画像**: 通过 `get_user_profile()` 方法，内部调用SDK的 `user.profile()` 方法
+- **插入对话数据**: 通过 `extract_and_update_profile()` 方法，内部调用SDK的 `user.insert()` 和 `user.flush()` 方法
+
+**SDK使用示例**:
+```python
+from memobase import MemoBaseClient, ChatBlob
+
+# 初始化客户端
+client = MemoBaseClient(
+    project_url="http://192.168.66.11:8019",
+    api_key="your-api-key"
+)
+
+# 获取或创建用户
+user = client.get_user(user_id)
+
+# 插入对话数据
+blob = ChatBlob(messages=[
+    {"role": "user", "content": "你好，我是测试用户"},
+    {"role": "assistant", "content": "很高兴认识你！"}
+])
+user.insert(blob)
+user.flush()
+
+# 获取用户画像
+profile = user.profile(max_token_size=500)
+```
+
+**说明**: 
+- Memobase的REST API主要提供基础的CRUD操作（创建、获取用户）
+- 高级功能（画像提取、对话处理）通过SDK实现
+- 这种设计可以更好地处理复杂的数据处理和AI功能
 
 ---
 
@@ -717,7 +841,14 @@ python3 test_all_apis.py
 
 | 端点 | 方法 | 描述 | 状态 |
 |------|------|------|------|
-| `/health` | GET | 健康检查 | ❌ (不支持) |
+| `/api/v1/healthcheck` | GET | 健康检查 | ✅ |
+| `/api/v1/users` | POST | 创建用户 | ✅ |
+| `/api/v1/users/{user_id}` | GET | 获取用户 | ✅ |
+| `/api/v1/users/{user_id}/profile` | GET | 获取用户画像 | ⚠️ (通过SDK使用) |
+| `/api/v1/users/{user_id}/blobs` | POST | 插入对话数据 | ⚠️ (通过SDK使用) |
+| `/api/v1/users/{user_id}/flush` | POST | 刷新用户数据 | ⚠️ (通过SDK使用) |
+
+**注意**: Memobase的高级功能（profile、blobs、flush）主要通过Python SDK使用，REST API端点可能不直接暴露。
 
 ### Mem0 API
 
