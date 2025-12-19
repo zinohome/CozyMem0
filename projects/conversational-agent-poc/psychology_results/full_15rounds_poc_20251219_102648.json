@@ -1,0 +1,111 @@
+{
+  "session_info": {
+    "session_id": "full_demo_15rounds",
+    "session_name": "完整系统演示 - 15轮深度咨询",
+    "user_id": "xiaowan_full",
+    "dataset_names": [
+      "kb_psyc"
+    ],
+    "role": "psychology_counselor",
+    "description": "展示完整记忆框架（LLM + kb_psyc + Memobase + Mem0）在15轮对话中的应用效果",
+    "focus_areas": [
+      "学业压力管理",
+      "人际关系改善",
+      "情绪调节训练",
+      "自我认同探索",
+      "应对策略建立"
+    ]
+  },
+  "user_profile": {
+    "name": "江小婉",
+    "age": 15,
+    "gender": "女",
+    "grade": "高一",
+    "school": "第二中学",
+    "location": "杭州",
+    "personality": "内向、敏感、完美主义",
+    "main_challenges": "学业压力大、人际关系困扰、情绪管理困难"
+  },
+  "execution_time": "2025-12-19T10:26:34.680908",
+  "total_elapsed_seconds": 14.071093,
+  "total_rounds": 15,
+  "successful_rounds": 0,
+  "failed_rounds": 15,
+  "rounds": [
+    {
+      "round": 1,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:34.687285"
+    },
+    {
+      "round": 2,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:35.692199"
+    },
+    {
+      "round": 3,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:36.697669"
+    },
+    {
+      "round": 4,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:37.702321"
+    },
+    {
+      "round": 5,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:38.706631"
+    },
+    {
+      "round": 6,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:39.708391"
+    },
+    {
+      "round": 7,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:40.713832"
+    },
+    {
+      "round": 8,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:41.716093"
+    },
+    {
+      "round": 9,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:42.721390"
+    },
+    {
+      "round": 10,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:43.726534"
+    },
+    {
+      "round": 11,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:44.732402"
+    },
+    {
+      "round": 12,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:45.737924"
+    },
+    {
+      "round": 13,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:46.742862"
+    },
+    {
+      "round": 14,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:47.747727"
+    },
+    {
+      "round": 15,
+      "error": "All connection attempts failed",
+      "timestamp": "2025-12-19T10:26:48.751923"
+    }
+  ]
+}
