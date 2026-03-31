@@ -1,0 +1,26 @@
+name: Mirror to yanyiai
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push mirror
+        env:
+          T: ${{ secrets.A_TO_B_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          git push --mirror "https://x-access-token:${T}@github.com/yanyiai/CozyMem0.git"
