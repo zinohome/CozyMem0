@@ -167,8 +167,8 @@ def get_all_memories(
     if not any([user_id, run_id, agent_id]):
         raise HTTPException(status_code=400, detail="At least one identifier is required.")
     try:
-        params = {k: v for k, v in {"user_id": user_id, "run_id": run_id, "agent_id": agent_id}.items() if v is not None}
-        return MEMORY_INSTANCE.get_all(**params)
+        filters = {k: v for k, v in {"user_id": user_id, "run_id": run_id, "agent_id": agent_id}.items() if v is not None}
+        return MEMORY_INSTANCE.get_all(filters=filters)
     except Exception as e:
         logging.exception("Error in get_all_memories:")
         raise HTTPException(status_code=500, detail=str(e))
@@ -195,7 +195,10 @@ def memory_history(memory_id: str, _api_key: Optional[str] = Depends(verify_api_
 @api_router.post("/search", summary="Search memories")
 def search_memories(search_req: SearchRequest, _api_key: Optional[str] = Depends(verify_api_key)):
     try:
-        params = {k: v for k, v in search_req.model_dump().items() if v is not None and k != "query"}
+        entity_keys = {"user_id", "agent_id", "run_id"}
+        raw = {k: v for k, v in search_req.model_dump().items() if v is not None and k != "query"}
+        filters = {k: raw.pop(k) for k in list(raw) if k in entity_keys}
+        params = {**raw, **({"filters": filters} if filters else {})}
         return MEMORY_INSTANCE.search(query=search_req.query, **params)
     except Exception as e:
         logging.exception("Error in search_memories:")
