@@ -23,6 +23,10 @@ RUN MEM0_PATH=$(python3 -c "import mem0.memory.main; import os; print(os.path.di
     python3 /tmp/apply_memory_fixes.py "$MEM0_PATH/main.py" && \
     echo "Memory fixes applied successfully!"
 
+# Fix Ollama JSON format for thinking models (qwen3.5, etc.)
+COPY deployment/mem0/patches/fix_ollama_json_format.py /tmp/fix_ollama_json_format.py
+RUN python3 /tmp/fix_ollama_json_format.py
+
 RUN mkdir -p /app/history
 
 EXPOSE 8000
