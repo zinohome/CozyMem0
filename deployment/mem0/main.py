@@ -37,6 +37,12 @@ HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
 CUSTOM_FACT_EXTRACTION_PROMPT = os.environ.get("CUSTOM_FACT_EXTRACTION_PROMPT", "")
 
+# Embedding 配置（独立于 LLM，支持本地 Ollama 或 OpenAI）
+EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", OPENAI_BASE_URL)
+EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", OPENAI_API_KEY)
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small")
+EMBEDDING_DIMS = int(os.environ.get("EMBEDDING_DIMS", "1536"))
+
 DEFAULT_CONFIG: Dict[str, Any] = {
     "version": "v1.1",
     "vector_store": {
@@ -45,7 +51,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "host": QDRANT_HOST,
             "port": QDRANT_PORT,
             "collection_name": QDRANT_COLLECTION_NAME,
-            "embedding_model_dims": 1536,
+            "embedding_model_dims": EMBEDDING_DIMS,
         },
     },
     "llm": {
@@ -60,9 +66,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "embedder": {
         "provider": "openai",
         "config": {
-            "api_key": OPENAI_API_KEY,
-            "openai_base_url": OPENAI_BASE_URL,
-            "model": "text-embedding-3-small",
+            "api_key": EMBEDDING_API_KEY,
+            "openai_base_url": EMBEDDING_BASE_URL,
+            "model": EMBEDDING_MODEL,
         },
     },
     "history_db_path": HISTORY_DB_PATH,
