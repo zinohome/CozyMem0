@@ -37,11 +37,59 @@ HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
 CUSTOM_FACT_EXTRACTION_PROMPT = os.environ.get("CUSTOM_FACT_EXTRACTION_PROMPT", "")
 
-# Embedding 配置（独立于 LLM，支持本地 Ollama 或 OpenAI）
+# LLM Provider 配置：openai（默认）或 ollama（本地推理）
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", OPENAI_BASE_URL)
+
+# Embedding Provider 配置：openai（默认）或 ollama（本地向量化）
+EMBEDDER_PROVIDER = os.environ.get("EMBEDDER_PROVIDER", "openai")
 EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", OPENAI_BASE_URL)
 EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", OPENAI_API_KEY)
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small")
 EMBEDDING_DIMS = int(os.environ.get("EMBEDDING_DIMS", "1536"))
+
+
+def _build_llm_config() -> dict:
+    if LLM_PROVIDER == "ollama":
+        return {
+            "provider": "ollama",
+            "config": {
+                "model": OPENAI_MODEL,
+                "ollama_base_url": LLM_BASE_URL.replace("/v1", ""),  # Ollama 原生 API 不带 /v1
+                "temperature": 0.2,
+                "max_tokens": 2000,
+            },
+        }
+    return {
+        "provider": "openai",
+        "config": {
+            "api_key": OPENAI_API_KEY,
+            "openai_base_url": OPENAI_BASE_URL,
+            "temperature": 0.2,
+            "model": OPENAI_MODEL,
+        },
+    }
+
+
+def _build_embedder_config() -> dict:
+    if EMBEDDER_PROVIDER == "ollama":
+        return {
+            "provider": "ollama",
+            "config": {
+                "model": EMBEDDING_MODEL,
+                "ollama_base_url": EMBEDDING_BASE_URL.replace("/v1", ""),
+                "embedding_dims": EMBEDDING_DIMS,
+            },
+        }
+    return {
+        "provider": "openai",
+        "config": {
+            "api_key": EMBEDDING_API_KEY,
+            "openai_base_url": EMBEDDING_BASE_URL,
+            "model": EMBEDDING_MODEL,
+        },
+    }
+
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "version": "v1.1",
@@ -54,28 +102,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "embedding_model_dims": EMBEDDING_DIMS,
         },
     },
-    "llm": {
-        "provider": "openai",
-        "config": {
-            "api_key": OPENAI_API_KEY,
-            "openai_base_url": OPENAI_BASE_URL,
-            "temperature": 0.2,
-            "model": OPENAI_MODEL,
-        },
-    },
-    "embedder": {
-        "provider": "openai",
-        "config": {
-            "api_key": EMBEDDING_API_KEY,
-            "openai_base_url": EMBEDDING_BASE_URL,
-            "model": EMBEDDING_MODEL,
-        },
-    },
+    "llm": _build_llm_config(),
+    "embedder": _build_embedder_config(),
     "history_db_path": HISTORY_DB_PATH,
 }
 if CUSTOM_FACT_EXTRACTION_PROMPT:
     DEFAULT_CONFIG["custom_fact_extraction_prompt"] = CUSTOM_FACT_EXTRACTION_PROMPT
 
+logging.info(f"Mem0 config: LLM={LLM_PROVIDER}/{OPENAI_MODEL} Embedder={EMBEDDER_PROVIDER}/{EMBEDDING_MODEL}")
 MEMORY_INSTANCE = Memory.from_config(DEFAULT_CONFIG)
 
 app = FastAPI(
