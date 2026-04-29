@@ -5,7 +5,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 
 COPY projects/mem0/server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir ollama
 
 # Copy upstream server code, then override main.py with our fixed version.
 # Our main.py replaces the brittle apply_server_fixes.py patch approach:
